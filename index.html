@@ -318,18 +318,18 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // --- CONFIGURATION ---
+    // --- KONFIGURACJA ---
     const firebaseConfig = {
-    apiKey: "AIzaSyCe-cPdX-9Cc429mF9WTBkQx0ZQbhBMQHs",
-    authDomain: "karate-app-5e2e1.firebaseapp.com",
-    databaseURL: "https://karate-app-5e2e1-default-rtdb.firebaseio.com",
-    projectId: "karate-app-5e2e1",
-    storageBucket: "karate-app-5e2e1.firebasestorage.app",
-    messagingSenderId: "195441239204",
-    appId: "1:195441239204:web:d0694cbf8e60358587b231",
-    measurementId: "G-7V9P7R4Z6L"
+        apiKey: "AIzaSyCe-cPdX-9Cc429mF9WTBkQx0ZQbhBMQHs",
+        authDomain: "karate-app-5e2e1.firebaseapp.com",
+        databaseURL: "https://karate-app-5e2e1-default-rtdb.firebaseio.com",
+        projectId: "karate-app-5e2e1",
+        storageBucket: "karate-app-5e2e1.firebasestorage.app",
+        messagingSenderId: "195441239204",
+        appId: "1:195441239204:web:d0694cbf8e60358587b231",
+        measurementId: "G-7V9P7R4Z6L"
     };
     
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyP8HDAmRxFgmBRohVd1OaEoKp9wfDN4GM5Vt3rfrzztLzoC6lV8Rdf7OfWtvN-VWc/exec"; 
@@ -345,8 +345,7 @@
         "5 Kyu",  "5.1 Kyu",  "5.2 Kyu",
         "4 Kyu",  "4.1 Kyu",  "4.2 Kyu",
         "3 Kyu",  "3.1 Kyu",  "3.2 Kyu",
-        "2 Kyu", 
-        "1 Kyu",
+        "2 Kyu", "1 Kyu",
         "1 DAN", "2 DAN", "3 DAN", "4 DAN", "5 DAN", 
         "6 DAN", "7 DAN", "8 DAN", "9 DAN", "10 DAN"
     ];
@@ -357,16 +356,23 @@
         ).join('');
     }
 
-    // --- APP LOGIC ---
+    // --- ZMIENNE GLOBALNE ---
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    
+    // Zmienne stanu aplikacji
     let members = JSON.parse(localStorage.getItem('sh_members')) || [];
     let currentExamSessionId = null;
     let currentProfileName = "";
     let currentTourId = null;
     let currentTourName = "";
-    let currentExamData = {}; // NOWA ZMIENNA DLA MASOWEGO ZATWIERDZANIA
+    
+    // ZMIENNE NAPRAWIONE
+    let currentExamData = {}; 
+    let currentCompetitorsData = []; 
+    let activeTournamentListener = null;
 
+    // FORMATOWANIE DATY
     function formatDateToPL(isoDate) {
         if(!isoDate) return "";
         const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
@@ -601,48 +607,7 @@
         document.getElementById('pay-amount').value = '';
     }
 
-    // --- 4b. TURNIEJE (ZINTEGROWANA EDYCJA + EXPORT + IMPORT) ---
-
-    // IMPORT ZAWODÓW (NOWOŚĆ)
-    window.importTournamentFromExcel = async function() {
-        let defaultName = "Turniej " + formatDateToPL(new Date());
-        let sessionName = prompt("Podaj nazwę dla importowanego turnieju:", defaultName);
-        if (!sessionName) return;
-
-        showLoader(true);
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=importTournaments");
-            const candidates = await res.json();
-            
-            if(candidates.length === 0) { 
-                alert("Pusto lub brak zakładki 'Zawody' w Excelu! (Wymagane kolumny: Imię, Rocznik, Waga)"); 
-                showLoader(false); return; 
-            }
-
-            const newRef = push(ref(db, 'tournaments'), { name: sessionName });
-            const tournamentId = newRef.key;
-            const updates = {};
-            
-            candidates.forEach(c => {
-                const newCandRef = push(ref(db, `tournaments/${tournamentId}/competitors`));
-                updates[`tournaments/${tournamentId}/competitors/${newCandRef.key}`] = {
-                    name: c.imie,
-                    year: c.rocznik,
-                    weight: c.waga,
-                    kataMat: "", kataNum: "",
-                    kumiteMat: "", kumiteNum: "",
-                    place: 0
-                };
-            });
-            
-            await update(ref(db), updates);
-            showLoader(false);
-            alert(`✅ Zaimportowano ${candidates.length} zawodników do turnieju: "${sessionName}"`);
-        } catch(e) {
-            showLoader(false);
-            alert("Błąd importu: " + e);
-        }
-    }
+    // --- 4b. TURNIEJE (NAPRAWIONE) ---
 
     onValue(ref(db, 'tournaments'), (snap) => {
         const data = snap.val() || {};
@@ -677,6 +642,7 @@
         }
     }
 
+    // OTWIERANIE TURNIEJU (POPRAWIONY NASŁUCH)
     window.openTournamentDetails = function(id, name) {
         currentTourId = id;
         currentTourName = name;
@@ -684,8 +650,15 @@
         document.getElementById('modal-tournament-details').style.display = 'flex';
         cancelEditComp(); 
 
+        // Wyłączamy stary nasłuch, żeby nie było konfliktów
+        if (activeTournamentListener) {
+            off(ref(db, `tournaments/${activeTournamentListener}/competitors`));
+        }
+        activeTournamentListener = id;
+
         onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
             const comps = snap.val() || {};
+            // Tutaj był błąd - teraz zmienna currentCompetitorsData jest zadeklarowana!
             currentCompetitorsData = Object.values(comps);
             
             const compsList = document.getElementById('tournament-competitors-list');
@@ -730,10 +703,12 @@
 
     window.closeTournamentModal = function() {
         document.getElementById('modal-tournament-details').style.display = 'none';
-        onValue(ref(db, `tournaments/${currentTourId}/competitors`), () => {}); 
+        if (activeTournamentListener) {
+            off(ref(db, `tournaments/${activeTournamentListener}/competitors`));
+            activeTournamentListener = null;
+        }
     }
 
-    // --- POPRAWIONA FUNKCJA ZAPISU (Z NAPRAWIONYM BUGIEM) ---
     window.saveCompetitor = function() {
         if (!currentTourId) {
             alert("Błąd: Nie wybrano turnieju! Zamknij okno i otwórz turniej ponownie.");
@@ -766,6 +741,7 @@
         promise.then(() => {
             showLoader(false);
             cancelEditComp();
+            // Sukces - dane same się pojawią dzięki onValue
         }).catch((error) => {
             showLoader(false);
             alert("Błąd zapisu do bazy: " + error.message);
@@ -842,6 +818,47 @@
         });
         showLoader(false);
         alert("📤 Dane wysłane!");
+    }
+
+    // NOWE: IMPORT ZAWODÓW
+    window.importTournamentFromExcel = async function() {
+        let defaultName = "Turniej " + formatDateToPL(new Date());
+        let sessionName = prompt("Podaj nazwę dla importowanego turnieju:", defaultName);
+        if (!sessionName) return;
+
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=importTournaments");
+            const candidates = await res.json();
+            
+            if(candidates.length === 0) { 
+                alert("Pusto lub brak zakładki 'Zawody' w Excelu! (Wymagane kolumny: Imię, Rocznik, Waga)"); 
+                showLoader(false); return; 
+            }
+
+            const newRef = push(ref(db, 'tournaments'), { name: sessionName });
+            const tournamentId = newRef.key;
+            const updates = {};
+            
+            candidates.forEach(c => {
+                const newCandRef = push(ref(db, `tournaments/${tournamentId}/competitors`));
+                updates[`tournaments/${tournamentId}/competitors/${newCandRef.key}`] = {
+                    name: c.imie,
+                    year: c.rocznik,
+                    weight: c.waga,
+                    kataMat: "", kataNum: "",
+                    kumiteMat: "", kumiteNum: "",
+                    place: 0
+                };
+            });
+            
+            await update(ref(db), updates);
+            showLoader(false);
+            alert(`✅ Zaimportowano ${candidates.length} zawodników do turnieju: "${sessionName}"`);
+        } catch(e) {
+            showLoader(false);
+            alert("Błąd importu: " + e);
+        }
     }
 
     window.showTourSuggestions = function(val) {
@@ -1069,5 +1086,3 @@
     initRankSelects();
 
 </script>
-</body>
-</html>
