@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHODAN Manager</title>
+    <style>
+    :root { --bg: #f2f2f7; --card: #ffffff; --text: #000000; --accent: #007aff; --nav: #ffffff; --border: #c6c6c8; --green: #34c759; --red: #ff3b30; --orange: #ff9500; --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32; }
+    body.dark { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --accent: #0a84ff; --nav: #1c1c1e; --border: #38383a; }
+    
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        background: var(--bg); 
+        color: var(--text); 
+        margin: 0; 
+        padding: 0; 
+        display: flex; 
+        justify-content: center; 
+        height: 100vh; 
+        height: 100dvh; 
+        overflow: hidden; 
+        -webkit-tap-highlight-color: transparent; 
+    }
+    
+    .app-container { 
+        width: 100%; 
+        max-width: 500px; 
+        height: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        position: relative; 
+    }
+    
+    .header { padding: 15px; background: var(--nav); border-bottom: 1px solid var(--border); font-weight: 800; font-size: 20px; text-align: center; display:flex; justify-content:space-between; align-items:center; z-index:10; flex-shrink: 0;}
+    
+    .content { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 15px; 
+        padding-bottom: 150px; 
+    }
+    
+    .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 600; font-size:16px; cursor: pointer; background: var(--accent); color: white; margin-top: 8px; transition: transform 0.1s; }
+    .btn:active { transform: scale(0.98); }
+    .btn-green { background: var(--green); }
+    .btn-orange { background: var(--orange); }
+    .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+    .row { display: flex; gap: 10px; } 
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size:16px; box-sizing: border-box; margin-bottom:5px;}
+    
+    .nav-bar { 
+        width: 100%; 
+        background: var(--nav); 
+        border-top: 1px solid var(--border); 
+        display: flex; 
+        justify-content: space-around; 
+        padding: 8px 0; 
+        padding-bottom: max(8px, env(safe-area-inset-bottom)); 
+        z-index: 20; 
+        flex-shrink: 0; 
+    }
+    
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #8e8e93; cursor: pointer; flex: 1; }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 24px; margin-bottom: 2px; }
+
+    .chip { display:inline-block; padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; font-size: 13px; margin-right:5px; cursor: pointer; white-space:nowrap; }
+    .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .status-dot { width:10px; height:10px; border-radius:50%; background:#ccc; }
+    .status-dot.online { background: var(--green); box-shadow: 0 0 5px var(--green); }
+
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:50; display:none; align-items:flex-end; justify-content:center; backdrop-filter: blur(2px); }
+    .modal-content { background: var(--card); width:100%; max-width:500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from {transform: translateY(100%)} to {transform: translateY(0)} }
+
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); color:white; display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 99; }
+    
+    .suggestions { border:1px solid var(--border); background:var(--card); position:absolute; width:90%; z-index:100; max-height:150px; overflow-y:auto; border-radius:0 0 8px 8px; display:none; bottom: 60px;}
+    .suggestion-item { padding:10px; border-bottom:1px solid var(--border); cursor:pointer; }
+    
+    .filters-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
+
+    /* Style dla medali */
+    .medal-btn { width:30px; height:30px; border-radius:50%; border:2px solid #ccc; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
+    .medal-btn.active { border-color: transparent; color: white; }
+</style>
+</head>
+<body>
+
+<div id="loader"><div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div></div>
+
+<div class="app-container">
+    <div class="header">
+        SHODAN TECHNOLOGY
+        <div style="display:flex; gap:10px; align-items:center">
+            <div id="conn-status" class="status-dot"></div>
+            <span onclick="toggleTheme()" style="font-size:22px; cursor:pointer;">🌓</span>
+        </div>
+    </div>
+
+    <div class="content" id="view-klub">
+        <div class="card" style="display:flex; gap:10px">
+            <input id="search-member" placeholder="🔍 Szukaj ucznia..." onkeyup="renderMembers()">
+            <button class="btn btn-outline" style="width:auto; margin:0;" onclick="syncMembers()">🔄</button>
+        </div>
+        
+        <div class="filters-scroll" id="club-group-filters"></div>
+
+        <div class="card" onclick="document.getElementById('add-member-form').style.display = 'block'">
+            <h4 style="margin:0">➕ Dodaj nowego ucznia</h4>
+            <div id="add-member-form" style="display:none; margin-top:10px">
+                <input id="new-name" placeholder="Imię i Nazwisko">
+                <div class="row">
+                    <div style="flex:1"><label style="font-size:10px;color:#888">Data urodzenia</label><input id="new-date" type="date"></div>
+                    <div style="flex:1"><label style="font-size:10px;color:#888">Stopień</label><select id="new-rank"></select></div>
+                </div>
+                <select id="new-group">
+                    <option>DZIECI 17-18</option><option>DZIECI 18-19</option><option>DOROŚLI</option><option>NOWA GRUPA</option>
+                </select>
+                <button class="btn" onclick="addNewMember()">ZAPISZ</button>
+            </div>
+        </div>
+        <div id="members-list"></div>
+    </div>
+
+    <div class="content" id="view-obecnosc" style="display:none">
+        <div class="card">
+            <h3>✅ Obecność</h3>
+            <input type="date" id="att-date" style="font-weight:bold">
+            <div class="filters-scroll" id="att-group-filters"></div>
+        </div>
+        <div id="att-list" class="card" style="display:none"></div>
+        <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
+    </div>
+
+    <div class="content" id="view-platnosci" style="display:none">
+        <div class="card">
+            <h3>💰 Przyjmij Wpłatę</h3>
+            <label style="font-size:12px; color:#888">Kto płaci?</label>
+            <div style="position:relative">
+                <input id="pay-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showSuggestions(this.value)">
+                <div id="pay-suggestions" class="suggestions"></div>
+            </div>
+            
+            <div class="row" style="margin-top:10px">
+                <div style="flex:1"><label style="font-size:12px; color:#888">Kwota</label><input type="number" id="pay-amount" placeholder="PLN" style="font-size:18px; font-weight:bold"></div>
+                <div style="flex:1"><label style="font-size:12px; color:#888">Metoda</label>
+                    <select id="pay-method" style="height:48px"><option>Gotówka</option><option>BLIK</option><option>Karta</option><option>Przelew</option></select>
+                </div>
+            </div>
+            
+            <div style="margin-top:10px">
+                <label style="font-size:12px; color:#888">Data wpłaty</label>
+                <input type="date" id="pay-date">
+            </div>
+
+            <label style="font-size:12px; color:#888; margin-top:10px; display:block">Za co? (Zaznacz)</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:5px">
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Składka" style="width:20px"> Składka</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Egzamin" style="width:20px"> Egzamin</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="1 Trening" style="width:20px"> 1 Trening</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Sprzęt</label>
+            </div>
+            <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
+            <button class="btn btn-green" onclick="submitPayment()">ZAKSIĘGUJ WPŁATĘ</button>
+        </div>
+    </div>
+
+    <div class="content" id="view-turnieje" style="display:none">
+        <div class="card">
+            <h3>🏆 Turnieje</h3>
+            <button class="btn btn-orange" onclick="importTournamentFromExcel()">📥 POBIERZ Z EXCELA ("Zawody")</button>
+            
+            <div style="margin:10px 0; text-align:center; font-size:12px; color:#888">- LUB UTWÓRZ RĘCZNIE -</div>
+            <div class="row">
+                <input id="t-new-name" placeholder="Nazwa turnieju">
+                <button class="btn" style="width:auto; margin:0" onclick="createTournament()">+</button>
+            </div>
+        </div>
+        <div id="tournaments-list"></div>
+    </div>
+
+    <div class="content" id="view-egzaminy" style="display:none">
+        <div class="card">
+            <h3>🥋 Sesje Egzaminacyjne</h3>
+            <button class="btn btn-orange" onclick="importExamFromExcel()">📥 POBIERZ Z EXCELA ("Egzaminy")</button>
+            <div style="margin:10px 0; text-align:center; font-size:12px; color:#888">- LUB UTWÓRZ RĘCZNIE -</div>
+            <div class="row">
+                <input id="exam-session-name" placeholder="Np. Zima 2026">
+                <button class="btn" style="width:auto; margin:0" onclick="createExamSession()">+</button>
+            </div>
+        </div>
+        <div id="exam-sessions-list"></div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('klub', this)"><div class="nav-icon">📇</div>Klub</div>
+        <div class="nav-item" onclick="nav('obecnosc', this)"><div class="nav-icon">✅</div>Obecność</div>
+        <div class="nav-item" onclick="nav('platnosci', this)"><div class="nav-icon">💳</div>Wpłata</div>
+        <div class="nav-item" onclick="nav('turnieje', this)"><div class="nav-icon">🏆</div>Turniej</div>
+        <div class="nav-item" onclick="nav('egzaminy', this)"><div class="nav-icon">🥋</div>Egzamin</div>
+    </div>
+</div>
+
+<div id="modal-profile" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+            <h2 id="prof-name" style="margin:0">Jan Kowalski</h2>
+            <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="document.getElementById('modal-profile').style.display='none'">X</button>
+        </div>
+        <div style="color:#666; margin:5px 0 15px 0; font-size:14px">
+            <span id="prof-rank" style="font-weight:bold; color:black"></span><br>
+            Ur. <span id="prof-year"></span>
+        </div>
+        
+        <div class="card" style="background:var(--bg); border:1px solid var(--border)">
+            <label style="font-size:10px; color:#888">PRZYPISANIE DO GRUPY:</label>
+            <div class="row" style="margin-top:5px">
+                <select id="prof-group-edit"></select>
+                <button class="btn" style="width:auto; margin:0; font-size:12px" onclick="saveGroupChange()">ZAPISZ</button>
+            </div>
+        </div>
+
+        <div class="card" style="border-left:4px solid var(--green)">
+            <h4>💰 Ostatnie wpłaty</h4>
+            <div id="prof-payments">Ładowanie...</div>
+        </div>
+        <div class="card" style="border-left:4px solid var(--accent)">
+            <h4>✅ Ostatnia obecność</h4>
+            <div id="prof-att">Ładowanie...</div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-exam-list" class="modal-overlay">
+    <div class="modal-content" style="height:90vh">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+            <h3 id="exam-title" style="margin:0">Sesja</h3>
+            <div style="display:flex; gap:5px">
+                <button class="btn btn-green" style="width:auto; margin:0; padding:5px 10px; font-size:12px" onclick="passAllCandidates()">✅ WSZYSCY ZDALI</button>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:5px 10px" onclick="closeExamModal()">ZAMKNIJ</button>
+            </div>
+        </div>
+        <div class="card" style="background:var(--bg)">
+            <label style="font-size:12px">Dodaj kandydata ręcznie:</label>
+            <div style="position:relative">
+                <input id="exam-add-name" placeholder="Wpisz nazwisko..." onkeyup="showExamSuggestions(this.value)">
+                <div id="exam-suggestions" class="suggestions"></div>
+            </div>
+            <div class="row" style="margin-top:5px">
+                <select id="exam-add-rank" style="width:100%"></select>
+            </div>
+            <button class="btn" onclick="addCandidate()">DODAJ DO LISTY</button>
+        </div>
+        <div id="exam-candidates-list" style="margin-bottom:50px"></div>
+    </div>
+</div>
+
+<div id="modal-tournament-details" class="modal-overlay">
+    <div class="modal-content" style="height:95vh; display:flex; flex-direction:column">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+            <h3 id="tour-title" style="margin:0">Turniej</h3>
+            <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="closeTournamentModal()">ZAMKNIJ</button>
+        </div>
+
+        <div class="card" style="background:var(--bg); border:1px solid var(--border); flex-shrink:0">
+            <input type="hidden" id="t-comp-id"> 
+            
+            <label style="font-size:10px; color:#888">ZAWODNIK</label>
+            <div style="position:relative">
+                <input id="t-comp-name" placeholder="Zacznij wpisywać nazwisko..." onkeyup="showTourSuggestions(this.value)" autocomplete="off">
+                <div id="tour-suggestions" class="suggestions"></div>
+            </div>
+
+            <div class="row" style="margin-top:5px">
+                <div style="flex:1">
+                    <label style="font-size:10px; color:#888">ROK</label>
+                    <input id="t-comp-year" type="number" placeholder="2010">
+                </div>
+                <div style="flex:1">
+                    <label style="font-size:10px; color:#888">WAGA (kg)</label>
+                    <input id="t-comp-weight" type="number" placeholder="kg">
+                </div>
+            </div>
+
+            <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px">
+                <label style="font-size:12px; font-weight:bold; color:var(--orange)">🥋 KATA</label>
+                <div class="row">
+                    <div style="flex:1"><input id="t-comp-kata-mat" placeholder="Mata" style="font-size:13px"></div>
+                    <div style="flex:1"><input id="t-comp-kata-num" placeholder="Nr Walk (np. 5, 12)" style="font-size:13px"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:5px; padding-top:5px">
+                <label style="font-size:12px; font-weight:bold; color:var(--accent)">🥊 KUMITE</label>
+                <div class="row">
+                    <div style="flex:1"><input id="t-comp-kumite-mat" placeholder="Mata" style="font-size:13px"></div>
+                    <div style="flex:1"><input id="t-comp-kumite-num" placeholder="Nr Walk (np. 8, 15)" style="font-size:13px"></div>
+                </div>
+            </div>
+
+            <button id="btn-add-comp" class="btn" onclick="saveCompetitor()">DODAJ ZAWODNIKA</button>
+            <button id="btn-cancel-edit" class="btn btn-outline" style="display:none; margin-top:5px" onclick="cancelEditComp()">ANULUJ EDYCJĘ</button>
+        </div>
+
+        <div style="flex:1; overflow-y:auto; margin-top:10px">
+            <h4 style="margin:0 0 10px 0">Lista startowa:</h4>
+            <div id="tournament-competitors-list" style="margin-bottom:60px"></div>
+        </div>
+
+        <button class="btn btn-green" style="flex-shrink:0; margin-bottom:10px" onclick="exportTournamentToExcel()">📤 EKSPORTUJ DO "APP_ZAWODY"</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // --- CONFIGURATION ---
+    const firebaseConfig = {
+    apiKey: "AIzaSyCe-cPdX-9Cc429mF9WTBkQx0ZQbhBMQHs",
+    authDomain: "karate-app-5e2e1.firebaseapp.com",
+    databaseURL: "https://karate-app-5e2e1-default-rtdb.firebaseio.com",
+    projectId: "karate-app-5e2e1",
+    storageBucket: "karate-app-5e2e1.firebasestorage.app",
+    messagingSenderId: "195441239204",
+    appId: "1:195441239204:web:d0694cbf8e60358587b231",
+    measurementId: "G-7V9P7R4Z6L"
+    };
+    
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyP8HDAmRxFgmBRohVd1OaEoKp9wfDN4GM5Vt3rfrzztLzoC6lV8Rdf7OfWtvN-VWc/exec"; 
+
+    // --- LISTA STOPNI ---
+    const RANKS = [
+        "Biały pas",
+        "10 Kyu", "10.1 Kyu", "10.2 Kyu",
+        "9 Kyu",  "9.1 Kyu",  "9.2 Kyu",
+        "8 Kyu",  "8.1 Kyu",  "8.2 Kyu",
+        "7 Kyu",  "7.1 Kyu",  "7.2 Kyu",
+        "6 Kyu",  "6.1 Kyu",  "6.2 Kyu",
+        "5 Kyu",  "5.1 Kyu",  "5.2 Kyu",
+        "4 Kyu",  "4.1 Kyu",  "4.2 Kyu",
+        "3 Kyu",  "3.1 Kyu",  "3.2 Kyu",
+        "2 Kyu", 
+        "1 Kyu",
+        "1 DAN", "2 DAN", "3 DAN", "4 DAN", "5 DAN", 
+        "6 DAN", "7 DAN", "8 DAN", "9 DAN", "10 DAN"
+    ];
+
+    function getRankOptions(selectedRank) {
+        return RANKS.map(r => 
+            `<option value="${r}" ${r === selectedRank ? 'selected' : ''}>${r}</option>`
+        ).join('');
+    }
+
+    // --- APP LOGIC ---
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let members = JSON.parse(localStorage.getItem('sh_members')) || [];
+    let currentExamSessionId = null;
+    let currentProfileName = "";
+    let currentTourId = null;
+    let currentTourName = "";
+    let currentExamData = {}; // NOWA ZMIENNA DLA MASOWEGO ZATWIERDZANIA
+
+    function formatDateToPL(isoDate) {
+        if(!isoDate) return "";
+        const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
+        const d = new Date(isoDate);
+        if(isNaN(d)) return isoDate;
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = months[d.getMonth()];
+        const year = d.getFullYear();
+        return `${day}-${mon}-${year}`;
+    }
+
+    // --- 1. KLUB & FILTRY ---
+    window.syncMembers = async function() {
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getMembers");
+            members = await res.json();
+            localStorage.setItem('sh_members', JSON.stringify(members));
+            renderMembers();
+            renderGroupFilters(); 
+            alert("✅ Baza zaktualizowana!");
+        } catch(e) { alert("Błąd: " + e); }
+        finally { showLoader(false); }
+    }
+    
+    let activeGroupFilter = "WSZYSCY";
+
+    window.renderGroupFilters = function() {
+        const mappedGroups = members.map(m => (m.grupa && m.grupa.trim() !== "") ? m.grupa : "BRAK GRUPY");
+        const groups = ["WSZYSCY", ...new Set(mappedGroups)];
+        
+        const clubHtml = groups.map(g => 
+            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${g}')">${g}</span>`
+        ).join('');
+        document.getElementById('club-group-filters').innerHTML = clubHtml;
+
+        const attGroups = groups.filter(g => g !== "WSZYSCY" && g !== "BRAK GRUPY");
+        const attHtml = attGroups.map(g => 
+            `<span class="chip" onclick="filterAtt('${g}', this)">${g}</span>`
+        ).join('');
+        document.getElementById('att-group-filters').innerHTML = attHtml;
+        
+        const selectHtml = attGroups.map(g => `<option>${g}</option>`).join('') + `<option value="BRAK">-- BRAK GRUPY --</option>`;
+        const newGroupSelect = document.getElementById('new-group');
+        const profGroupSelect = document.getElementById('prof-group-edit');
+        
+        if(newGroupSelect) newGroupSelect.innerHTML = selectHtml;
+        if(profGroupSelect) profGroupSelect.innerHTML = selectHtml;
+    }
+
+    window.setClubFilter = function(grp) {
+        activeGroupFilter = grp;
+        renderMembers();
+        renderGroupFilters();
+    }
+
+    window.renderMembers = function() {
+        const term = document.getElementById('search-member').value.toLowerCase();
+        let list = members;
+        
+        if(activeGroupFilter !== "WSZYSCY") {
+            if(activeGroupFilter === "BRAK GRUPY") {
+                list = list.filter(m => !m.grupa || m.grupa.trim() === "" || m.grupa === "BRAK GRUPY");
+            } else {
+                list = list.filter(m => m.grupa === activeGroupFilter);
+            }
+        }
+
+        const html = list.filter(m => m.imie.toLowerCase().includes(term)).map(m => `
+            <div class="card" onclick="openProfile('${m.imie}')">
+                <div style="font-weight:bold">${m.imie}</div>
+                <div style="font-size:12px; color:#666">
+                    ${m.stopien} | ${(!m.grupa || m.grupa.trim() === "") ? '<span style="color:var(--red)">BRAK GRUPY</span>' : m.grupa}
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('members-list').innerHTML = html;
+    }
+
+    renderGroupFilters();
+    renderMembers();
+
+    window.addNewMember = async function() {
+        const imie = document.getElementById('new-name').value;
+        const rawDate = document.getElementById('new-date').value;
+        const stopien = document.getElementById('new-rank').value || "Biały pas";
+        const grupa = document.getElementById('new-group').value;
+
+        if(!imie || !rawDate) return alert("Podaj Imię i Datę!");
+        const formattedDate = formatDateToPL(rawDate);
+
+        showLoader(true);
+        await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({type:'addMember', imie, rok: formattedDate, stopien, grupa})});
+        members.push({imie, ur: formattedDate, stopien, grupa});
+        localStorage.setItem('sh_members', JSON.stringify(members));
+        
+        renderMembers();
+        renderGroupFilters();
+        document.getElementById('add-member-form').style.display='none';
+        showLoader(false);
+    }
+
+    // --- 2. PROFIL & EDYCJA ---
+    window.openProfile = async function(name) {
+        const member = members.find(m => m.imie === name);
+        if(!member) return;
+        currentProfileName = name;
+        
+        document.getElementById('prof-name').innerText = member.imie;
+        document.getElementById('prof-rank').innerText = member.stopien;
+        document.getElementById('prof-year').innerText = member.ur;
+        document.getElementById('prof-group-edit').value = member.grupa || "BRAK";
+        
+        document.getElementById('modal-profile').style.display = 'flex';
+        
+        const res = await fetch(SCRIPT_URL + "?action=getProfile&name=" + encodeURIComponent(name));
+        const data = await res.json();
+        
+        document.getElementById('prof-payments').innerHTML = data.payments.length ? data.payments.map(p => 
+            `<div style="font-size:13px; border-bottom:1px solid #eee; padding:5px"><b>${p.kwota} zł</b> (${p.za_co})<br><span style="color:#888">${p.data}</span></div>`
+        ).join('') : "Brak wpłat";
+        document.getElementById('prof-att').innerHTML = data.attendance.length ? data.attendance.join(', ') : "Brak danych";
+    }
+
+    window.saveGroupChange = async function() {
+        const newGroup = document.getElementById('prof-group-edit').value;
+        if(!confirm(`Zmienić grupę ${currentProfileName} na ${newGroup}?`)) return;
+
+        showLoader(true);
+        const m = members.find(x => x.imie === currentProfileName);
+        if(m) m.grupa = (newGroup === "BRAK" ? "" : newGroup);
+        localStorage.setItem('sh_members', JSON.stringify(members));
+        
+        await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({type:'updateGroup', imie: currentProfileName, newGroup})});
+        
+        renderMembers();
+        renderGroupFilters();
+        showLoader(false);
+        alert("Grupa zmieniona!");
+    }
+
+    // --- 3. OBECNOŚĆ ---
+    document.getElementById('att-date').valueAsDate = new Date();
+    let attSelection = {};
+    let attGroup = "";
+
+    window.filterAtt = function(grp, el) {
+        attGroup = grp;
+        document.querySelectorAll('#att-group-filters .chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        
+        const list = members.filter(m => m.grupa === grp);
+        document.getElementById('att-list').style.display = 'block';
+        document.getElementById('att-send-btn').style.display = 'block';
+        
+        document.getElementById('att-list').innerHTML = list.map(m => `
+            <div class="list-item" onclick="toggleAttItem('${m.imie}')">
+                <span>${m.imie}</span>
+                <div id="chk-${m.imie.replace(/\s/g,'')}" class="status-dot" style="width:24px; height:24px; border:2px solid #ccc"></div>
+            </div>
+        `).join('');
+        attSelection = {};
+    }
+
+    window.toggleAttItem = function(name) {
+        const key = name.replace(/\s/g,'');
+        attSelection[name] = !attSelection[name];
+        const el = document.getElementById('chk-'+key);
+        if(attSelection[name]) { el.style.background='var(--green)'; el.style.borderColor='var(--green)'; }
+        else { el.style.background='transparent'; el.style.borderColor='#ccc'; }
+    }
+
+    window.sendAttendance = async function() {
+        const present = Object.keys(attSelection).filter(k => attSelection[k]);
+        if(present.length === 0) return alert("Zaznacz kogoś!");
+        showLoader(true);
+        
+        const rawDate = document.getElementById('att-date').value;
+        const prettyDate = formatDateToPL(rawDate);
+
+        await fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({
+                type: 'obecnosc',
+                dataTreningu: prettyDate,
+                grupa: attGroup,
+                lista: present.map(n => ({imie:n}))
+            })
+        });
+        showLoader(false);
+        alert("✅ Obecność wysłana!");
+        document.getElementById('att-list').style.display = 'none';
+    }
+
+    // --- 4. PŁATNOŚCI ---
+    document.getElementById('pay-date').valueAsDate = new Date();
+
+    window.showSuggestions = function(val) {
+        const box = document.getElementById('pay-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPayMember('${m.imie}')">${m.imie}</div>`).join('');
+        box.style.display = 'block';
+    }
+    window.selectPayMember = function(name) {
+        document.getElementById('pay-name').value = name;
+        document.getElementById('pay-suggestions').style.display='none';
+    }
+
+    window.submitPayment = async function() {
+        const imie = document.getElementById('pay-name').value;
+        const kwota = document.getElementById('pay-amount').value;
+        const cats = Array.from(document.querySelectorAll('.pay-cat:checked')).map(c=>c.value).join(', ');
+        
+        if(!imie || !kwota || !cats) return alert("Uzupełnij dane!");
+        
+        const dataWplaty = document.getElementById('pay-date').value; 
+
+        showLoader(true);
+        await fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({
+                type: 'newPaymentLog', 
+                imie, 
+                kwota, 
+                dataWplaty: dataWplaty, 
+                metoda: document.getElementById('pay-method').value,
+                kategorie: cats, 
+                uwagi: document.getElementById('pay-notes').value
+            })
+        });
+        showLoader(false);
+        alert("💰 Zaksięgowano!");
+        document.getElementById('pay-amount').value = '';
+    }
+
+    // --- 4b. TURNIEJE (ZINTEGROWANA EDYCJA + EXPORT + IMPORT) ---
+
+    // IMPORT ZAWODÓW (NOWOŚĆ)
+    window.importTournamentFromExcel = async function() {
+        let defaultName = "Turniej " + formatDateToPL(new Date());
+        let sessionName = prompt("Podaj nazwę dla importowanego turnieju:", defaultName);
+        if (!sessionName) return;
+
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=importTournaments");
+            const candidates = await res.json();
+            
+            if(candidates.length === 0) { 
+                alert("Pusto lub brak zakładki 'Zawody' w Excelu! (Wymagane kolumny: Imię, Rocznik, Waga)"); 
+                showLoader(false); return; 
+            }
+
+            const newRef = push(ref(db, 'tournaments'), { name: sessionName });
+            const tournamentId = newRef.key;
+            const updates = {};
+            
+            candidates.forEach(c => {
+                const newCandRef = push(ref(db, `tournaments/${tournamentId}/competitors`));
+                updates[`tournaments/${tournamentId}/competitors/${newCandRef.key}`] = {
+                    name: c.imie,
+                    year: c.rocznik,
+                    weight: c.waga,
+                    kataMat: "", kataNum: "",
+                    kumiteMat: "", kumiteNum: "",
+                    place: 0
+                };
+            });
+            
+            await update(ref(db), updates);
+            showLoader(false);
+            alert(`✅ Zaimportowano ${candidates.length} zawodników do turnieju: "${sessionName}"`);
+        } catch(e) {
+            showLoader(false);
+            alert("Błąd importu: " + e);
+        }
+    }
+
+    onValue(ref(db, 'tournaments'), (snap) => {
+        const data = snap.val() || {};
+        const listHtml = Object.entries(data).reverse().map(([id, t]) => `
+            <div class="card" onclick="openTournamentDetails('${id}', '${t.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                <div>
+                    <div style="font-weight:bold">${t.name}</div>
+                    <div style="font-size:11px; color:#666">Kliknij, aby zarządzać</div>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteTournament('${id}', event)">
+                    🗑️
+                </button>
+            </div>
+        `).join('');
+        
+        const listEl = document.getElementById('tournaments-list');
+        if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#ccc; margin-top:10px">Brak turniejów</div>';
+    });
+
+    window.createTournament = function() {
+        const input = document.getElementById('t-new-name');
+        const name = input.value;
+        if(!name) return alert("Wpisz nazwę turnieju!");
+        push(ref(db, 'tournaments'), { name });
+        input.value = ''; 
+    }
+
+    window.deleteTournament = function(id, event) {
+        if(event) event.stopPropagation();
+        if(confirm("Czy na pewno usunąć ten turniej i listę zawodników?")) {
+            remove(ref(db, `tournaments/${id}`));
+        }
+    }
+
+    window.openTournamentDetails = function(id, name) {
+        currentTourId = id;
+        currentTourName = name;
+        document.getElementById('tour-title').innerText = name;
+        document.getElementById('modal-tournament-details').style.display = 'flex';
+        cancelEditComp(); 
+
+        onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
+            const comps = snap.val() || {};
+            currentCompetitorsData = Object.values(comps);
+            
+            const compsList = document.getElementById('tournament-competitors-list');
+            
+            if (Object.keys(comps).length === 0) {
+                compsList.innerHTML = '<div style="text-align:center; padding:20px; color:#999">Brak zawodników na liście.</div>';
+                return;
+            }
+
+            compsList.innerHTML = Object.entries(comps).reverse().map(([cid, c]) => `
+                <div class="card" style="padding:10px; border-left:4px solid var(--accent)">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="font-weight:bold">${c.name}</span>
+                        <span style="font-size:12px; font-weight:bold; color:var(--text)">${c.year}r. | ${c.weight}kg</span>
+                    </div>
+                    
+                    <div style="margin-top:8px; font-size:12px; color:#666">
+                        ${(c.kataMat || c.kataNum) ? `<div><b>KATA:</b> Mata ${c.kataMat||'-'} / Walki: ${c.kataNum||'-'}</div>` : ''}
+                        ${(c.kumiteMat || c.kumiteNum) ? `<div><b>KUMITE:</b> Mata ${c.kumiteMat||'-'} / Walki: ${c.kumiteNum||'-'}</div>` : ''}
+                        ${(!c.kataMat && !c.kataNum && !c.kumiteMat && !c.kumiteNum) ? '<i>Brak przypisanych walk</i>' : ''}
+                    </div>
+
+                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:5px; border-radius:8px">
+                        <span style="font-size:10px; font-weight:bold; color:#888">WYNIK:</span>
+                        <div class="medal-btn ${c.place==1?'active':''}" style="${c.place==1?'background:var(--gold); border-color:var(--gold)':''}" onclick="setResult('${cid}', 1)">🥇</div>
+                        <div class="medal-btn ${c.place==2?'active':''}" style="${c.place==2?'background:var(--silver); border-color:var(--silver)':''}" onclick="setResult('${cid}', 2)">🥈</div>
+                        <div class="medal-btn ${c.place==3?'active':''}" style="${c.place==3?'background:var(--bronze); border-color:var(--bronze)':''}" onclick="setResult('${cid}', 3)">🥉</div>
+                        <div class="medal-btn" onclick="setResult('${cid}', 0)" style="font-size:10px; color:#888; border:1px dashed #ccc">X</div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:10px; justify-content:flex-end">
+                        <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px" 
+                            onclick="editCompetitor('${cid}', '${c.name}', '${c.year}', '${c.weight}', 
+                            '${c.kataMat||''}', '${c.kataNum||''}', '${c.kumiteMat||''}', '${c.kumiteNum||''}')">EDYTUJ</button>
+                        <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px; border-color:var(--red); color:var(--red)" 
+                            onclick="removeCompetitor('${cid}')">USUŃ</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+    }
+
+    window.closeTournamentModal = function() {
+        document.getElementById('modal-tournament-details').style.display = 'none';
+        onValue(ref(db, `tournaments/${currentTourId}/competitors`), () => {}); 
+    }
+
+    // --- POPRAWIONA FUNKCJA ZAPISU (Z NAPRAWIONYM BUGIEM) ---
+    window.saveCompetitor = function() {
+        if (!currentTourId) {
+            alert("Błąd: Nie wybrano turnieju! Zamknij okno i otwórz turniej ponownie.");
+            return;
+        }
+
+        const id = document.getElementById('t-comp-id').value;
+        const name = document.getElementById('t-comp-name').value;
+        const year = document.getElementById('t-comp-year').value;
+        const weight = document.getElementById('t-comp-weight').value;
+        
+        const kataMat = document.getElementById('t-comp-kata-mat').value;
+        const kataNum = document.getElementById('t-comp-kata-num').value;
+        const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
+        const kumiteNum = document.getElementById('t-comp-kumite-num').value;
+
+        if(!name || !weight) return alert("Podaj Nazwisko i Wagę!");
+
+        const data = { name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum };
+        
+        showLoader(true);
+
+        let promise;
+        if(id) {
+            promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
+        } else {
+            promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
+        }
+
+        promise.then(() => {
+            showLoader(false);
+            cancelEditComp();
+        }).catch((error) => {
+            showLoader(false);
+            alert("Błąd zapisu do bazy: " + error.message);
+            console.error(error);
+        });
+    }
+
+    window.setResult = function(cid, place) {
+        update(ref(db, `tournaments/${currentTourId}/competitors/${cid}`), { place: place });
+    }
+
+    window.removeCompetitor = function(cid) {
+        if(confirm("Usunąć zawodnika z listy?")) {
+            remove(ref(db, `tournaments/${currentTourId}/competitors/${cid}`));
+        }
+    }
+
+    window.editCompetitor = function(cid, name, year, weight, kMat, kNum, kuMat, kuNum) {
+        document.getElementById('t-comp-id').value = cid;
+        document.getElementById('t-comp-name').value = name;
+        document.getElementById('t-comp-year').value = year;
+        document.getElementById('t-comp-weight').value = weight;
+        
+        document.getElementById('t-comp-kata-mat').value = kMat;
+        document.getElementById('t-comp-kata-num').value = kNum;
+        document.getElementById('t-comp-kumite-mat').value = kuMat;
+        document.getElementById('t-comp-kumite-num').value = kuNum;
+
+        const btn = document.getElementById('btn-add-comp');
+        btn.innerText = "ZAPISZ ZMIANY";
+        btn.classList.add('btn-orange');
+        document.getElementById('btn-cancel-edit').style.display = 'block';
+        document.querySelector('.modal-content').scrollTop = 0;
+    }
+
+    window.cancelEditComp = function() {
+        document.getElementById('t-comp-id').value = '';
+        document.getElementById('t-comp-name').value = '';
+        document.getElementById('t-comp-weight').value = '';
+        
+        document.getElementById('t-comp-kata-mat').value = '';
+        document.getElementById('t-comp-kata-num').value = '';
+        document.getElementById('t-comp-kumite-mat').value = '';
+        document.getElementById('t-comp-kumite-num').value = '';
+        
+        const btn = document.getElementById('btn-add-comp');
+        btn.innerText = "DODAJ ZAWODNIKA";
+        btn.classList.remove('btn-orange');
+        document.getElementById('btn-cancel-edit').style.display = 'none';
+    }
+
+    window.exportTournamentToExcel = async function() {
+        if(!currentCompetitorsData || currentCompetitorsData.length === 0) return alert("Brak danych do eksportu!");
+        if(!confirm("Wysłać dane do Google Sheets?")) return;
+
+        showLoader(true);
+        const exportList = currentCompetitorsData.map(c => ({
+            imie: c.name,
+            rocznik: c.year,
+            waga: c.weight,
+            kataMat: c.kataMat,
+            kataNum: c.kataNum,
+            kumiteMat: c.kumiteMat,
+            kumiteNum: c.kumiteNum,
+            wynik: c.place ? `${c.place}. Miejsce` : ""
+        }));
+
+        await fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({
+                type: 'exportTournament',
+                turniejName: currentTourName,
+                lista: exportList
+            })
+        });
+        showLoader(false);
+        alert("📤 Dane wysłane!");
+    }
+
+    window.showTourSuggestions = function(val) {
+        const box = document.getElementById('tour-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        if(matches.length === 0) { box.style.display='none'; return; }
+
+        box.innerHTML = matches.map(m => `
+            <div class="suggestion-item" onclick="selectTourMember('${m.imie}', '${m.ur}')">
+                <div style="font-weight:bold">${m.imie}</div>
+                <div style="font-size:11px; color:#666">Ur: ${m.ur || 'brak'} | ${m.stopien}</div>
+            </div>
+        `).join('');
+        box.style.display = 'block';
+    }
+
+    window.selectTourMember = function(name, urDate) {
+        document.getElementById('t-comp-name').value = name;
+        if(urDate && urDate.includes('-')) {
+            const parts = urDate.split('-'); 
+            if(parts.length === 3) document.getElementById('t-comp-year').value = parts[2]; 
+        } else if (urDate && urDate.length === 4) {
+            document.getElementById('t-comp-year').value = urDate;
+        }
+        document.getElementById('tour-suggestions').style.display = 'none';
+    }
+
+    // --- 5. EGZAMINY ---
+    onValue(ref(db, 'exams'), (snap) => {
+        const data = snap.val() || {};
+        document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
+            <div class="card" onclick="openExamSession('${id}', '${s.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                <div>
+                    <div style="font-weight:bold">${s.name}</div>
+                    <div style="font-size:12px; color:#666">Kliknij, aby otworzyć</div>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteExamSession('${id}', event)">
+                    🗑️
+                </button>
+            </div>
+        `).join('');
+    });
+
+    window.createExamSession = function() {
+        const name = document.getElementById('exam-session-name').value;
+        if(name) push(ref(db, 'exams'), { name });
+    }
+
+    window.deleteExamSession = function(id, event) {
+        event.stopPropagation();
+        if(confirm("Czy na pewno usunąć tę listę egzaminacyjną?")) {
+            remove(ref(db, 'exams/' + id));
+        }
+    }
+
+    window.importExamFromExcel = async function() {
+        let defaultName = "Egzamin " + formatDateToPL(new Date());
+        let sessionName = prompt("Podaj nazwę dla tej listy egzaminacyjnej:", defaultName);
+        if (!sessionName) return;
+
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=importExamList");
+            const candidates = await res.json();
+            
+            if(candidates.length === 0) { 
+                alert("Pusto! Sprawdź zakładkę Egzaminy w Excelu."); 
+                showLoader(false); return; 
+            }
+
+            const newRef = push(ref(db, 'exams'), { name: sessionName });
+            const sessionId = newRef.key;
+            const updates = {};
+            candidates.forEach(c => {
+                const newCandRef = push(ref(db, `exams/${sessionId}/candidates`));
+                updates[`exams/${sessionId}/candidates/${newCandRef.key}`] = {
+                    imie: c.imie,
+                    targetRank: c.targetRank || "10 Kyu",
+                    status: 'WAIT'
+                };
+            });
+            await update(ref(db), updates);
+            showLoader(false);
+            alert(`✅ Utworzono listę: "${sessionName}"`);
+        } catch(e) {
+            showLoader(false);
+            alert("Błąd: " + e);
+        }
+    }
+
+    window.openExamSession = function(id, name) {
+        currentExamSessionId = id;
+        document.getElementById('exam-title').innerText = name;
+        document.getElementById('modal-exam-list').style.display = 'flex';
+        
+        onValue(ref(db, `exams/${id}/candidates`), (snap) => {
+            const list = snap.val() || {};
+            currentExamData = list; 
+
+            document.getElementById('exam-candidates-list').innerHTML = Object.entries(list).map(([cid, c]) => `
+                <div class="card" style="border-left:5px solid ${c.status==='PASS'?'var(--green)':'#ccc'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div style="flex:1">
+                            <b>${c.imie}</b><br>
+                            Zdaje na: 
+                            ${c.status === 'WAIT' ? 
+                                `<select id="rank-${cid}" style="width:150px; padding:5px; font-weight:bold" onchange="updateCandidateRank('${id}', '${cid}', this.value)" onclick="event.stopPropagation()">
+                                    ${getRankOptions(c.targetRank)}
+                                </select>` 
+                                : `<b>${c.targetRank}</b>`
+                            }
+                        </div>
+                        ${c.status !== 'PASS' ? `<button class="btn btn-green" style="width:auto; padding:5px 15px; margin:0" onclick="passCandidate('${cid}', '${c.imie}')">ZDAŁ</button>` : '✅'}
+                    </div>
+                </div>
+            `).join('');
+        });
+    }
+    
+    window.closeExamModal = function() { document.getElementById('modal-exam-list').style.display = 'none'; }
+
+    // Aktualizacja stopnia "w locie" po zmianie selecta (żeby przycisk WSZYSCY wiedział co wysłać)
+    window.updateCandidateRank = function(examId, cid, newRank) {
+        update(ref(db, `exams/${examId}/candidates/${cid}`), { targetRank: newRank });
+    }
+
+    // --- FUNKCJA MASOWEGO ZATWIERDZANIA ---
+    window.passAllCandidates = async function() {
+        const toPass = Object.entries(currentExamData).filter(([k, v]) => v.status === 'WAIT');
+        
+        if (toPass.length === 0) return alert("Wszyscy już zdali!");
+        if (!confirm(`⚠️ Zatwierdzić awans dla ${toPass.length} osób?\n\nOperacja zostanie wykonana zbiorczo.`)) return;
+
+        showLoader(true);
+        const updates = {};
+        const bulkList = [];
+
+        toPass.forEach(([cid, c]) => {
+            // 1. Zmieniamy status w Firebase (zielony ptaszek)
+            updates[`exams/${currentExamSessionId}/candidates/${cid}/status`] = 'PASS';
+            
+            // 2. Dodajemy do listy wysyłkowej do Excela
+            bulkList.push({ imie: c.imie, nowyStopien: c.targetRank });
+            
+            // 3. Aktualizujemy pamięć telefonu (zakładka Klub)
+            const m = members.find(x => x.imie === c.imie);
+            if(m) m.stopien = c.targetRank;
+        });
+
+        // Wykonujemy
+        await update(ref(db), updates); // Firebase
+        localStorage.setItem('sh_members', JSON.stringify(members)); // Telefon
+        
+        // Wysyłamy jedną paczkę do Google (obsługuje nawet 100 osób naraz)
+        await fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({ type: 'examPassedBulk', lista: bulkList })
+        });
+        
+        showLoader(false);
+        alert("✅ Wszyscy zostali zatwierdzeni!");
+    }
+
+    window.showExamSuggestions = function(val) {
+        const box = document.getElementById('exam-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectExamMember('${m.imie}')">${m.imie}</div>`).join('');
+        box.style.display = 'block';
+    }
+    window.selectExamMember = function(name) {
+        document.getElementById('exam-add-name').value = name;
+        document.getElementById('exam-suggestions').style.display = 'none';
+    }
+
+    window.addCandidate = function() {
+        const imie = document.getElementById('exam-add-name').value;
+        const targetRank = document.getElementById('exam-add-rank').value;
+        if(!imie || !targetRank) return;
+        push(ref(db, `exams/${currentExamSessionId}/candidates`), { imie, targetRank, status: 'WAIT' });
+        document.getElementById('exam-add-name').value = '';
+    }
+
+    window.passCandidate = function(cid, imie) {
+        const rankSelect = document.getElementById(`rank-${cid}`);
+        const finalRank = rankSelect ? rankSelect.value : "???";
+
+        if(!confirm(`Czy ${imie} na pewno zdał na ${finalRank}?`)) return;
+        
+        update(ref(db, `exams/${currentExamSessionId}/candidates/${cid}`), { status: 'PASS', targetRank: finalRank });
+        
+        fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({ type: 'examPassed', imie, nowyStopien: finalRank })
+        });
+
+        const m = members.find(x => x.imie === imie);
+        if(m) m.stopien = finalRank;
+        localStorage.setItem('sh_members', JSON.stringify(members));
+    }
+
+    window.nav = function(id, el) {
+        document.querySelectorAll('.content').forEach(d => d.style.display='none');
+        document.getElementById('view-'+id).style.display='block';
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+    }
+    
+    window.toggleTheme = function() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+    }
+    if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+    
+    function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+    document.getElementById('conn-status').classList.add('online');
+
+    function initRankSelects() {
+        const newMemberSelect = document.getElementById('new-rank');
+        const examAddSelect = document.getElementById('exam-add-rank');
+        
+        if(newMemberSelect) newMemberSelect.innerHTML = getRankOptions("Biały pas");
+        if(examAddSelect) examAddSelect.innerHTML = getRankOptions("10 Kyu");
+    }
+    initRankSelects();
+
+</script>
+</body>
+</html>
