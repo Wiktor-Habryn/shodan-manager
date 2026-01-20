@@ -211,6 +211,11 @@
             <h2 id="prof-name" style="margin:0">Jan Kowalski</h2>
             <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="document.getElementById('modal-profile').style.display='none'">X</button>
         </div>
+
+        <button class="btn btn-outline" style="width:100%; margin:10px 0; border-color:#ccc; color:#333; font-size:12px" onclick="openEditDetails()">
+            ✏️ EDYTUJ DANE OSOBOWE (Imię, Data, Pas)
+        </button>
+
         <div style="color:#666; margin:5px 0 15px 0; font-size:14px">
             <span id="prof-rank" style="font-weight:bold; color:black"></span><br>
             Ur. <span id="prof-year"></span>
@@ -315,7 +320,27 @@
         <button class="btn btn-green" style="flex-shrink:0; margin-bottom:10px" onclick="exportTournamentToExcel()">📤 EKSPORTUJ DO "APP_ZAWODY"</button>
     </div>
 </div>
-
+<div id="modal-edit-member" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Edycja Klubowicza</h3>
+        
+        <input type="hidden" id="edit-orig-name">
+        
+        <label style="font-size:12px; color:#888">Imię i Nazwisko</label>
+        <input id="edit-new-name" style="font-weight:bold">
+        
+        <label style="font-size:12px; color:#888">Data Urodzenia</label>
+        <input type="date" id="edit-new-dob">
+        
+        <label style="font-size:12px; color:#888">Stopień</label>
+        <select id="edit-new-rank" style="width:100%; margin-bottom:15px"></select>
+        
+        <div class="row">
+            <button class="btn btn-outline" onclick="document.getElementById('modal-edit-member').style.display='none'">ANULUJ</button>
+            <button class="btn btn-green" onclick="saveMemberDetails()">ZAPISZ ZMIANY</button>
+        </div>
+    </div>
+</div>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -1085,6 +1110,89 @@
     }
     initRankSelects();
 
+// --- FUNKCJE EDYCJI DANYCH OSOBOWYCH (Imię, Data, Pas) ---
+
+    // 1. Inicjalizacja listy stopni w nowym oknie (dodaj to do initRankSelects lub wywołaj osobno)
+    const editRankSelect = document.getElementById('edit-new-rank');
+    if(editRankSelect) editRankSelect.innerHTML = getRankOptions("Biały pas");
+
+    // 2. Otwieranie okna edycji i wypełnianie go danymi
+    window.openEditDetails = function() {
+        // Szukamy danych aktualnie wyświetlanego profilu
+        const m = members.find(x => x.imie === currentProfileName);
+        if(!m) return;
+
+        // Wypełniamy pola formularza
+        document.getElementById('edit-orig-name').value = m.imie; // Stare imię (klucz do szukania)
+        document.getElementById('edit-new-name').value = m.imie;  // Nowe imię (do edycji)
+        
+        // Ustawiamy stopień
+        const rankSelect = document.getElementById('edit-new-rank');
+        if(rankSelect) rankSelect.innerHTML = getRankOptions(m.stopien);
+
+        // Konwersja daty z formatu polskiego (15-STY-2010) na format inputa HTML (2010-01-15)
+        let isoDate = "";
+        if(m.ur && m.ur.includes('-')) {
+             const parts = m.ur.split('-'); // [15, STY, 2010]
+             const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
+             const monthIndex = months.indexOf(parts[1]);
+             if(monthIndex > -1) {
+                 const mm = String(monthIndex + 1).padStart(2, '0');
+                 isoDate = `${parts[2]}-${mm}-${parts[0]}`;
+             }
+        }
+        document.getElementById('edit-new-dob').value = isoDate;
+
+        // Przełączamy widok: Zamykamy profil -> Otwieramy edycję
+        document.getElementById('modal-profile').style.display = 'none';
+        document.getElementById('modal-edit-member').style.display = 'flex';
+    }
+
+    // 3. Zapisywanie zmian (Wysyłka do Google Apps Script)
+    window.saveMemberDetails = async function() {
+        const origName = document.getElementById('edit-orig-name').value;
+        const newName = document.getElementById('edit-new-name').value;
+        const rawDob = document.getElementById('edit-new-dob').value;
+        const newRank = document.getElementById('edit-new-rank').value;
+        
+        if(!newName) return alert("Nazwisko nie może być puste!");
+
+        // Konwersja daty z powrotem na polski format (dla Excela)
+        const prettyDob = formatDateToPL(rawDob);
+
+        showLoader(true);
+        
+        // Wysyłamy paczkę do backendu (Code.gs obsłuży type: 'updateMemberData')
+        await fetch(SCRIPT_URL, {
+            method: 'POST', body: JSON.stringify({
+                type: 'updateMemberData',
+                originalName: origName,
+                newName: newName,
+                newDob: prettyDob,
+                newRank: newRank
+            })
+        });
+
+        // Aktualizujemy dane w pamięci telefonu natychmiast (żeby nie trzeba było odświeżać całej bazy)
+        const m = members.find(x => x.imie === origName);
+        if(m) {
+            m.imie = newName;
+            if(prettyDob) m.ur = prettyDob;
+            m.stopien = newRank;
+        }
+        localStorage.setItem('sh_members', JSON.stringify(members));
+
+        showLoader(false);
+        alert("✅ Dane zaktualizowane!");
+        
+        // Zamykamy okno edycji i odświeżamy listę na ekranie
+        document.getElementById('modal-edit-member').style.display = 'none';
+        renderMembers();
+        
+        // Ponownie otwieramy profil (już z nowymi danymi)
+        openProfile(newName);
+    }
+    
 </script>
 </body>
 </html>
