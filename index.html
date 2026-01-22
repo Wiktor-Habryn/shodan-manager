@@ -129,6 +129,8 @@
     <div class="content" id="view-obecnosc" style="display:none">
         <div class="card">
             <h3>✅ Obecność</h3>
+            
+            <button class="btn btn-outline" style="margin-bottom:10px; font-size:12px" onclick="showAttendanceReport()">📜 Lista Obecności</button>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
         </div>
@@ -139,6 +141,8 @@
     <div class="content" id="view-platnosci" style="display:none">
         <div class="card">
             <h3>💰 Przyjmij Wpłatę</h3>
+            <button class="btn btn-outline" style="margin-bottom:10px; font-size:12px" onclick="showFinanceReport()">📜 Lista Płatności</button>
+            
             <label style="font-size:12px; color:#888">Kto płaci?</label>
             <div style="position:relative">
                 <input id="pay-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showSuggestions(this.value)">
@@ -341,6 +345,25 @@
         </div>
     </div>
 </div>
+<div id="modal-reports" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-content" style="max-height:85vh; display:flex; flex-direction:column">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+            <h3 id="report-title" style="margin:0">Raport</h3>
+            <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="document.getElementById('modal-reports').style.display='none'">X</button>
+        </div>
+
+        <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px">
+            <label style="font-size:10px; color:#888">WYBIERZ MIESIĄC:</label>
+            <select id="report-month-filter" style="font-weight:bold; font-size:14px; width:100%; padding:8px" onchange="renderFilteredReport()"></select>
+        </div>
+
+        <div id="report-content" style="overflow-y:auto; flex:1">
+            Ładowanie...
+        </div>
+    </div>
+</div>
+    
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -1192,7 +1215,119 @@
         // Ponownie otwieramy profil (już z nowymi danymi)
         openProfile(newName);
     }
+    // --- ZAAWANSOWANE RAPORTY (Historia i Finanse) ---
     
+    let reportsCache = null;
+    let currentReportType = ""; // 'FINANCE' lub 'ATTENDANCE'
+
+    async function fetchReports() {
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getReports");
+            reportsCache = await res.json();
+        } catch(e) {
+            alert("Błąd: " + e);
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    // Funkcja: Buduje listę dostępnych miesięcy w Select
+    function setupMonthFilter(dataArray) {
+        const select = document.getElementById('report-month-filter');
+        select.innerHTML = "";
+        
+        // 1. Pobieramy unikalne miesiące z danych
+        const months = [...new Set(dataArray.map(item => item.dateKey))];
+        
+        // 2. Sortujemy (najnowsze na górze)
+        months.sort().reverse();
+
+        // 3. Wypełniamy listę
+        months.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.text = m; // np. 2026-01
+            select.appendChild(opt);
+        });
+
+        // 4. Wyświetlamy pierwszy miesiąc (jeśli są dane)
+        if(months.length > 0) {
+            select.selectedIndex = 0;
+            renderFilteredReport();
+        } else {
+            document.getElementById('report-content').innerHTML = '<div style="text-align:center; padding:20px; color:#ccc">Brak historii.</div>';
+        }
+    }
+
+    // Funkcja: Wyświetla dane dla wybranego miesiąca
+    window.renderFilteredReport = function() {
+        const selectedMonth = document.getElementById('report-month-filter').value;
+        const container = document.getElementById('report-content');
+        let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+        let total = 0;
+
+        if (currentReportType === 'FINANCE') {
+            const filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
+            
+            filtered.forEach(p => {
+                total += parseFloat(p.kwota || 0);
+                html += `
+                <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--green)">
+                    <div style="display:flex; justify-content:space-between">
+                        <span style="font-weight:bold">${p.imie}</span>
+                        <span style="font-weight:bold; color:var(--green)">${p.kwota} zł</span>
+                    </div>
+                    <div style="font-size:11px; color:#666; margin-top:4px">
+                        ${p.displayDate} | ${p.kat} <br>
+                        ${p.uwagi ? '<i>' + p.uwagi + '</i>' : ''}
+                    </div>
+                </div>`;
+            });
+            // Dodajemy podsumowanie na górę listy
+            html = `<div style="text-align:center; font-weight:bold; margin-bottom:10px; padding:10px; background:#e6f4ea; border-radius:8px; color:var(--green); border:1px solid var(--green)">
+                        SUMA (${selectedMonth}): ${total.toFixed(2)} zł
+                    </div>` + html;
+
+        } else if (currentReportType === 'ATTENDANCE') {
+            const filtered = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
+            
+            filtered.forEach(a => {
+                html += `
+                <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--accent)">
+                    <div style="display:flex; justify-content:space-between">
+                        <span style="font-weight:bold">${a.displayDate}</span>
+                        <span style="font-weight:bold; color:var(--accent)">${a.licznik} os.</span>
+                    </div>
+                    <div style="font-size:12px; color:#666">
+                        Grupa: ${a.grupa}
+                    </div>
+                </div>`;
+            });
+        }
+        
+        html += '</div>';
+        container.innerHTML = filtered.length ? html : '<div style="text-align:center; margin-top:20px; color:#ccc">Brak danych w tym miesiącu.</div>';
+    }
+
+    // PRZYCISK: HISTORIA WPŁAT
+    window.showFinanceReport = async function() {
+        await fetchReports();
+        currentReportType = 'FINANCE';
+        document.getElementById('report-title').innerText = "💰 Historia Wpłat";
+        setupMonthFilter(reportsCache.payments);
+        document.getElementById('modal-reports').style.display = 'flex';
+    }
+
+    // PRZYCISK: HISTORIA TRENINGÓW
+    window.showAttendanceReport = async function() {
+        await fetchReports();
+        currentReportType = 'ATTENDANCE';
+        document.getElementById('report-title').innerText = "✅ Historia Treningów";
+        setupMonthFilter(reportsCache.attendance);
+        document.getElementById('modal-reports').style.display = 'flex';
+    }
 </script>
 </body>
 </html>
+
