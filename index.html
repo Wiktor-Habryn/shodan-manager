@@ -129,11 +129,12 @@
     <div class="content" id="view-obecnosc" style="display:none">
         <div class="card">
             <h3>✅ Obecność</h3>
-            
-            <button class="btn btn-outline" style="margin-bottom:10px; font-size:12px" onclick="showAttendanceReport()">📜 Lista Obecności</button>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
+
+            <button class="btn btn-outline" style="margin-top:10px; font-size:12px" onclick="showAttendanceReport()">📜 HISTORIA TRENINGÓW</button>
         </div>
+
         <div id="att-list" class="card" style="display:none"></div>
         <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
     </div>
@@ -141,8 +142,6 @@
     <div class="content" id="view-platnosci" style="display:none">
         <div class="card">
             <h3>💰 Przyjmij Wpłatę</h3>
-            <button class="btn btn-outline" style="margin-bottom:10px; font-size:12px" onclick="showFinanceReport()">📜 Lista Płatności</button>
-            
             <label style="font-size:12px; color:#888">Kto płaci?</label>
             <div style="position:relative">
                 <input id="pay-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showSuggestions(this.value)">
@@ -169,7 +168,10 @@
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Sprzęt</label>
             </div>
             <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
+            
             <button class="btn btn-green" onclick="submitPayment()">ZAKSIĘGUJ WPŁATĘ</button>
+
+            <button class="btn btn-outline" style="margin-top:15px; font-size:12px; border:none; color:#666" onclick="showFinanceReport()">📜 Zobacz historię wpłat</button>
         </div>
     </div>
 
@@ -361,6 +363,8 @@
         <div id="report-content" style="overflow-y:auto; flex:1">
             Ładowanie...
         </div>
+
+        <button class="btn btn-outline" style="margin-top:10px; border-color:#ccc; color:#333" onclick="document.getElementById('modal-reports').style.display='none'">WRÓĆ DO MENU</button>
     </div>
 </div>
     
@@ -1266,9 +1270,11 @@
         const container = document.getElementById('report-content');
         let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
         let total = 0;
+        let filtered = []; // <--- TU BYŁ BŁĄD (Teraz deklarujemy to na początku)
 
         if (currentReportType === 'FINANCE') {
-            const filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
+            // Filtrujemy i przypisujemy do zmiennej głównej
+            filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
             
             filtered.forEach(p => {
                 total += parseFloat(p.kwota || 0);
@@ -1284,13 +1290,14 @@
                     </div>
                 </div>`;
             });
-            // Dodajemy podsumowanie na górę listy
+            // Podsumowanie na górę
             html = `<div style="text-align:center; font-weight:bold; margin-bottom:10px; padding:10px; background:#e6f4ea; border-radius:8px; color:var(--green); border:1px solid var(--green)">
                         SUMA (${selectedMonth}): ${total.toFixed(2)} zł
                     </div>` + html;
 
         } else if (currentReportType === 'ATTENDANCE') {
-            const filtered = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
+            // Filtrujemy i przypisujemy do zmiennej głównej
+            filtered = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
             
             filtered.forEach(a => {
                 html += `
@@ -1307,6 +1314,8 @@
         }
         
         html += '</div>';
+        
+        // Teraz zmienna 'filtered' jest widoczna, więc błąd zniknie!
         container.innerHTML = filtered.length ? html : '<div style="text-align:center; margin-top:20px; color:#ccc">Brak danych w tym miesiącu.</div>';
     }
 
@@ -1330,4 +1339,5 @@
 </script>
 </body>
 </html>
+
 
