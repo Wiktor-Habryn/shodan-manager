@@ -355,8 +355,10 @@
             <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="document.getElementById('modal-reports').style.display='none'">X</button>
         </div>
 
+        <input id="report-search" placeholder="🔍 Szukaj osoby (wpisz nazwisko)..." style="margin-bottom:10px; border:2px solid var(--accent)" onkeyup="renderFilteredReport()">
+
         <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px">
-            <label style="font-size:10px; color:#888">WYBIERZ MIESIĄC:</label>
+            <label style="font-size:10px; color:#888">LUB WYBIERZ MIESIĄC:</label>
             <select id="report-month-filter" style="font-weight:bold; font-size:14px; width:100%; padding:8px" onchange="renderFilteredReport()"></select>
         </div>
 
@@ -1264,18 +1266,26 @@
         }
     }
 
-// Funkcja: Wyświetla dane (Płatności - standardowo, Obecność - zgrupowana datami)
+// Funkcja: Wyświetla dane (Z wyszukiwaniem osoby)
     window.renderFilteredReport = function() {
+        const searchTerm = document.getElementById('report-search').value.toLowerCase().trim();
         const selectedMonth = document.getElementById('report-month-filter').value;
         const container = document.getElementById('report-content');
+        
         let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
-        let total = 0;
         let filtered = [];
+        let isSearchMode = searchTerm.length > 1; // Tryb szukania włączony, jeśli wpisano > 1 znak
 
-        // --- WIDOK PŁATNOŚCI (Bez zmian) ---
+        // --- 1. RAPORT PŁATNOŚCI ---
         if (currentReportType === 'FINANCE') {
-            filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
+            // Jeśli szukamy: filtruj po imieniu (cała historia). Jeśli nie: filtruj po miesiącu.
+            if (isSearchMode) {
+                filtered = reportsCache.payments.filter(p => p.imie.toLowerCase().includes(searchTerm));
+            } else {
+                filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
+            }
             
+            let total = 0;
             filtered.forEach(p => {
                 total += parseFloat(p.kwota || 0);
                 html += `
@@ -1291,96 +1301,114 @@
                 </div>`;
             });
             
+            // Podsumowanie (zależne od trybu)
+            let title = isSearchMode ? `SUMA (WYNIKI WYSZUKIWANIA)` : `SUMA (${selectedMonth})`;
             html = `<div style="text-align:center; font-weight:bold; margin-bottom:10px; padding:10px; background:#e6f4ea; border-radius:8px; color:var(--green); border:1px solid var(--green)">
-                        SUMA (${selectedMonth}): ${total.toFixed(2)} zł
+                        ${title}: ${total.toFixed(2)} zł
                     </div>` + html;
 
-        // --- WIDOK OBECNOŚCI (NOWOŚĆ: Grupowanie po dacie) ---
+        // --- 2. RAPORT OBECNOŚCI ---
         } else if (currentReportType === 'ATTENDANCE') {
             
-            // 1. Najpierw pobieramy wszystkie wpisy z tego miesiąca
-            const rawList = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
-            
-            if (rawList.length > 0) {
-                // 2. Grupujemy je według daty (np. "15-STY-2026")
-                const daysMap = {};
-                
-                rawList.forEach(item => {
-                    if (!daysMap[item.displayDate]) {
-                        daysMap[item.displayDate] = {
-                            totalCount: 0,
-                            groups: []
-                        };
-                    }
-                    daysMap[item.displayDate].totalCount += item.licznik;
-                    daysMap[item.displayDate].groups.push(item);
-                });
+            if (isSearchMode) {
+                // TRYB SZUKANIA OSOBY (Płaska lista dat)
+                // Przeszukujemy WSZYSTKIE wpisy, sprawdzając czy nazwisko jest w liście osób
+                filtered = reportsCache.attendance.filter(a => 
+                    (a.listaOsob || []).some(personName => personName.toLowerCase().includes(searchTerm))
+                );
 
-                // 3. Generujemy jeden kafelek dla każdej Daty
-                Object.entries(daysMap).forEach(([dateStr, data], index) => {
-                    let detailId = 'att-day-' + index;
-                    
-                    // Budujemy wnętrze (grupy)
-                    let groupsHtml = data.groups.map(g => {
-                        // Lista nazwisk w danej grupie
-                        const names = (g.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
-                        
-                        return `
-                        <div style="margin-bottom:10px; background:white; padding:8px; border-radius:6px; border-left:3px solid var(--accent); box-shadow:0 1px 2px rgba(0,0,0,0.05)">
-                            <div style="font-weight:bold; color:var(--accent); font-size:13px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px">
-                                ${g.grupa.toUpperCase()} (${g.licznik} os.)
-                            </div>
-                            <div style="font-size:13px; color:#333; line-height:1.5">
-                                ${names || '<i>Brak nazwisk</i>'}
-                            </div>
-                        </div>`;
-                    }).join('');
+                html += `<div style="padding:10px; font-weight:bold; color:var(--accent)">Znaleziono obecności: ${filtered.length}</div>`;
 
-                    // Główny kafelek Daty
+                filtered.forEach(a => {
                     html += `
-                    <div class="card" onclick="toggleDetails('${detailId}')" style="padding:12px; margin:0; border-left:4px solid #555; cursor:pointer">
+                    <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--accent)">
                         <div style="display:flex; justify-content:space-between; align-items:center">
-                            <div style="display:flex; align-items:center; gap:8px">
-                                <span style="font-size:18px">📅</span>
-                                <span style="font-weight:bold; font-size:16px">${dateStr}</span>
+                            <div>
+                                <span style="font-weight:bold; font-size:15px">📅 ${a.displayDate}</span>
+                                <div style="font-size:12px; color:#666">${a.grupa}</div>
                             </div>
-                            <div style="text-align:right">
-                                <span style="font-weight:bold; color:#333; font-size:16px">Łącznie: ${data.totalCount}</span>
-                                <span style="font-size:12px; color:#999; margin-left:5px">▼</span>
-                            </div>
-                        </div>
-                        
-                        <div id="${detailId}" style="display:none; margin-top:12px; padding:10px; background:#f2f2f7; border-radius:8px">
-                            ${groupsHtml}
+                            <div style="font-size:18px">✅</div>
                         </div>
                     </div>`;
                 });
+
+            } else {
+                // TRYB STANDARDOWY (MIESIĄCE + GRUPOWANIE)
+                const rawList = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
                 
-                // Ustawiamy flagę, że coś znaleźliśmy, żeby nie pokazać komunikatu "Brak danych"
-                filtered = [1]; 
+                if (rawList.length > 0) {
+                    filtered = [1]; // Flaga, że są dane
+                    const daysMap = {};
+                    
+                    rawList.forEach(item => {
+                        if (!daysMap[item.displayDate]) daysMap[item.displayDate] = { totalCount: 0, groups: [] };
+                        daysMap[item.displayDate].totalCount += item.licznik;
+                        daysMap[item.displayDate].groups.push(item);
+                    });
+
+                    Object.entries(daysMap).forEach(([dateStr, data], index) => {
+                        let detailId = 'att-day-' + index;
+                        let groupsHtml = data.groups.map(g => {
+                            const names = (g.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
+                            return `
+                            <div style="margin-bottom:10px; background:white; padding:8px; border-radius:6px; border-left:3px solid var(--accent); box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+                                <div style="font-weight:bold; color:var(--accent); font-size:13px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px">
+                                    ${g.grupa.toUpperCase()} (${g.licznik} os.)
+                                </div>
+                                <div style="font-size:13px; color:#333; line-height:1.5">${names || '<i>Brak nazwisk</i>'}</div>
+                            </div>`;
+                        }).join('');
+
+                        html += `
+                        <div class="card" onclick="toggleDetails('${detailId}')" style="padding:12px; margin:0; border-left:4px solid #555; cursor:pointer">
+                            <div style="display:flex; justify-content:space-between; align-items:center">
+                                <div style="display:flex; align-items:center; gap:8px">
+                                    <span style="font-size:18px">📅</span>
+                                    <span style="font-weight:bold; font-size:16px">${dateStr}</span>
+                                </div>
+                                <div style="text-align:right">
+                                    <span style="font-weight:bold; color:#333; font-size:16px">Łącznie: ${data.totalCount}</span>
+                                    <span style="font-size:12px; color:#999; margin-left:5px">▼</span>
+                                </div>
+                            </div>
+                            <div id="${detailId}" style="display:none; margin-top:12px; padding:10px; background:#f2f2f7; border-radius:8px">
+                                ${groupsHtml}
+                            </div>
+                        </div>`;
+                    });
+                }
             }
         }
         
         html += '</div>';
         
-        // Wyświetlamy
-        container.innerHTML = (currentReportType === 'FINANCE' ? filtered.length : (html.includes('class="card"'))) 
-                              ? html 
-                              : '<div style="text-align:center; margin-top:20px; color:#ccc">Brak danych w tym miesiącu.</div>';
+        // Czyścić pole wyboru miesiąca, jeśli szukamy?
+        const noDataMsg = isSearchMode ? 'Nie znaleziono takiej osoby.' : 'Brak danych w tym miesiącu.';
+        
+        container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
     }
+    
+// --- FUNKCJE POMOCNICZE (BEZ POWTÓRZEŃ) ---
 
-    // Nowa mała funkcja do pokazywania/ukrywania listy
+    // 1. Rozwijanie/Zwijanie listy (używane w raporcie obecności)
     window.toggleDetails = function(id) {
         const el = document.getElementById(id);
-        if (el.style.display === 'none') {
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
+        if (el) {
+            el.style.display = (el.style.display === 'none') ? 'block' : 'none';
         }
     }
+    
+    // 2. Czyszczenie paska wyszukiwania
+    window.clearSearch = function() {
+        const input = document.getElementById('report-search');
+        if(input) input.value = "";
+    }
+
+    // --- PRZYCISKI RAPORTÓW ---
 
     // PRZYCISK: HISTORIA WPŁAT
     window.showFinanceReport = async function() {
+        clearSearch(); // Czyścimy szukanie przed otwarciem
         await fetchReports();
         currentReportType = 'FINANCE';
         document.getElementById('report-title').innerText = "💰 Historia Wpłat";
@@ -1390,6 +1418,7 @@
 
     // PRZYCISK: HISTORIA TRENINGÓW
     window.showAttendanceReport = async function() {
+        clearSearch(); // Czyścimy szukanie przed otwarciem
         await fetchReports();
         currentReportType = 'ATTENDANCE';
         document.getElementById('report-title').innerText = "✅ Historia Treningów";
@@ -1399,7 +1428,3 @@
 </script>
 </body>
 </html>
-
-
-
-
