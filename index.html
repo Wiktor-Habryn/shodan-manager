@@ -131,8 +131,7 @@
             <h3>✅ Obecność</h3>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
-
-            <button class="btn btn-outline" style="margin-top:10px; font-size:12px" onclick="showAttendanceReport()">📜 HISTORIA TRENINGÓW</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666" onclick="showFinanceReport()">📜 Lista Obecności</button>
         </div>
 
         <div id="att-list" class="card" style="display:none"></div>
@@ -166,12 +165,12 @@
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Egzamin" style="width:20px"> Egzamin</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="1 Trening" style="width:20px"> 1 Trening</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Sprzęt</label>
-            </div>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Inne</label>
             <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
             
-            <button class="btn btn-green" onclick="submitPayment()">ZAKSIĘGUJ WPŁATĘ</button>
+            <button class="btn btn-green" onclick="submitPayment()">Zapisz</button>
 
-            <button class="btn btn-outline" style="margin-top:15px; font-size:12px; border:none; color:#666" onclick="showFinanceReport()">📜 Zobacz historię wpłat</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666" onclick="showFinanceReport()">📜 Zobacz historię wpłat</button>
         </div>
     </div>
 
@@ -1428,3 +1427,4 @@
 </script>
 </body>
 </html>
+
