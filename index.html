@@ -1264,7 +1264,7 @@
         }
     }
 
-// Funkcja: Wyświetla dane dla wybranego miesiąca (Z ROZWIJANIEM)
+// Funkcja: Wyświetla dane (Płatności - standardowo, Obecność - zgrupowana datami)
     window.renderFilteredReport = function() {
         const selectedMonth = document.getElementById('report-month-filter').value;
         const container = document.getElementById('report-content');
@@ -1272,6 +1272,7 @@
         let total = 0;
         let filtered = [];
 
+        // --- WIDOK PŁATNOŚCI (Bez zmian) ---
         if (currentReportType === 'FINANCE') {
             filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
             
@@ -1294,37 +1295,78 @@
                         SUMA (${selectedMonth}): ${total.toFixed(2)} zł
                     </div>` + html;
 
+        // --- WIDOK OBECNOŚCI (NOWOŚĆ: Grupowanie po dacie) ---
         } else if (currentReportType === 'ATTENDANCE') {
-            filtered = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
             
-            filtered.forEach((a, index) => {
-                // Tworzymy unikalne ID dla każdej listy osób
-                let detailId = 'att-det-' + index;
-                // Zamieniamy tablicę nazwisk w ładny tekst po przecinku
-                let namesHtml = (a.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
+            // 1. Najpierw pobieramy wszystkie wpisy z tego miesiąca
+            const rawList = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
+            
+            if (rawList.length > 0) {
+                // 2. Grupujemy je według daty (np. "15-STY-2026")
+                const daysMap = {};
+                
+                rawList.forEach(item => {
+                    if (!daysMap[item.displayDate]) {
+                        daysMap[item.displayDate] = {
+                            totalCount: 0,
+                            groups: []
+                        };
+                    }
+                    daysMap[item.displayDate].totalCount += item.licznik;
+                    daysMap[item.displayDate].groups.push(item);
+                });
 
-                html += `
-                <div class="card" onclick="toggleDetails('${detailId}')" style="padding:10px; margin:0; border-left:4px solid var(--accent); cursor:pointer; active:background-color:#f0f0f0">
-                    <div style="display:flex; justify-content:space-between; align-items:center">
-                        <div>
-                            <span style="font-weight:bold; font-size:15px">${a.displayDate}</span>
-                            <div style="font-size:11px; color:#666; margin-top:2px">${a.grupa}</div>
-                        </div>
-                        <div style="text-align:right">
-                            <span style="font-weight:bold; color:var(--accent); font-size:16px">${a.licznik} os.</span>
-                            <div style="font-size:10px; color:#999">▼</div>
-                        </div>
-                    </div>
+                // 3. Generujemy jeden kafelek dla każdej Daty
+                Object.entries(daysMap).forEach(([dateStr, data], index) => {
+                    let detailId = 'att-day-' + index;
                     
-                    <div id="${detailId}" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; font-size:13px; color:#333; line-height:1.6">
-                        ${namesHtml}
-                    </div>
-                </div>`;
-            });
+                    // Budujemy wnętrze (grupy)
+                    let groupsHtml = data.groups.map(g => {
+                        // Lista nazwisk w danej grupie
+                        const names = (g.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
+                        
+                        return `
+                        <div style="margin-bottom:10px; background:white; padding:8px; border-radius:6px; border-left:3px solid var(--accent); box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+                            <div style="font-weight:bold; color:var(--accent); font-size:13px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px">
+                                ${g.grupa.toUpperCase()} (${g.licznik} os.)
+                            </div>
+                            <div style="font-size:13px; color:#333; line-height:1.5">
+                                ${names || '<i>Brak nazwisk</i>'}
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    // Główny kafelek Daty
+                    html += `
+                    <div class="card" onclick="toggleDetails('${detailId}')" style="padding:12px; margin:0; border-left:4px solid #555; cursor:pointer">
+                        <div style="display:flex; justify-content:space-between; align-items:center">
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <span style="font-size:18px">📅</span>
+                                <span style="font-weight:bold; font-size:16px">${dateStr}</span>
+                            </div>
+                            <div style="text-align:right">
+                                <span style="font-weight:bold; color:#333; font-size:16px">Łącznie: ${data.totalCount}</span>
+                                <span style="font-size:12px; color:#999; margin-left:5px">▼</span>
+                            </div>
+                        </div>
+                        
+                        <div id="${detailId}" style="display:none; margin-top:12px; padding:10px; background:#f2f2f7; border-radius:8px">
+                            ${groupsHtml}
+                        </div>
+                    </div>`;
+                });
+                
+                // Ustawiamy flagę, że coś znaleźliśmy, żeby nie pokazać komunikatu "Brak danych"
+                filtered = [1]; 
+            }
         }
         
         html += '</div>';
-        container.innerHTML = filtered.length ? html : '<div style="text-align:center; margin-top:20px; color:#ccc">Brak danych w tym miesiącu.</div>';
+        
+        // Wyświetlamy
+        container.innerHTML = (currentReportType === 'FINANCE' ? filtered.length : (html.includes('class="card"'))) 
+                              ? html 
+                              : '<div style="text-align:center; margin-top:20px; color:#ccc">Brak danych w tym miesiącu.</div>';
     }
 
     // Nowa mała funkcja do pokazywania/ukrywania listy
@@ -1357,6 +1399,7 @@
 </script>
 </body>
 </html>
+
 
 
 
