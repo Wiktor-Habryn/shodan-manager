@@ -131,7 +131,7 @@
             <h3>✅ Obecność</h3>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 HISTORIA TRENINGÓW</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 Lista Obecności</button>
         </div>
 
         <div id="att-list" class="card" style="display:none"></div>
@@ -180,7 +180,7 @@
                 <button id="btn-send-all" class="btn btn-green" onclick="submitAllPayments()">✅ WYŚLIJ WSZYSTKO (0 zł)</button>
             </div>
 
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Zobacz historię wpłat</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności</button>
         </div>
     </div>
 
@@ -755,8 +755,9 @@
         }
     }
 
-    // --- 4b. TURNIEJE (NAPRAWIONE) ---
+// --- 4b. TURNIEJE (Z ROZDZIELONYMI MEDALAMI I POPRAWNĄ EDYCJĄ) ---
 
+    // Pobieranie listy turniejów
     onValue(ref(db, 'tournaments'), (snap) => {
         const data = snap.val() || {};
         const listHtml = Object.entries(data).reverse().map(([id, t]) => `
@@ -775,6 +776,7 @@
         if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#ccc; margin-top:10px">Brak turniejów</div>';
     });
 
+    // Tworzenie turnieju
     window.createTournament = function() {
         const input = document.getElementById('t-new-name');
         const name = input.value;
@@ -783,6 +785,7 @@
         input.value = ''; 
     }
 
+    // Usuwanie turnieju
     window.deleteTournament = function(id, event) {
         if(event) event.stopPropagation();
         if(confirm("Czy na pewno usunąć ten turniej i listę zawodników?")) {
@@ -790,7 +793,7 @@
         }
     }
 
-    // OTWIERANIE TURNIEJU (POPRAWIONY NASŁUCH)
+    // Otwieranie szczegółów turnieju
     window.openTournamentDetails = function(id, name) {
         currentTourId = id;
         currentTourName = name;
@@ -798,15 +801,14 @@
         document.getElementById('modal-tournament-details').style.display = 'flex';
         cancelEditComp(); 
 
-        // Wyłączamy stary nasłuch, żeby nie było konfliktów
         if (activeTournamentListener) {
             off(ref(db, `tournaments/${activeTournamentListener}/competitors`));
         }
         activeTournamentListener = id;
 
+        // Renderowanie listy zawodników
         onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
             const comps = snap.val() || {};
-            // Tutaj był błąd - teraz zmienna currentCompetitorsData jest zadeklarowana!
             currentCompetitorsData = Object.values(comps);
             
             const compsList = document.getElementById('tournament-competitors-list');
@@ -824,23 +826,32 @@
                     </div>
                     
                     <div style="margin-top:8px; font-size:12px; color:#666">
-                        ${(c.kataMat || c.kataNum) ? `<div><b>KATA:</b> Mata ${c.kataMat||'-'} / Walki: ${c.kataNum||'-'}</div>` : ''}
-                        ${(c.kumiteMat || c.kumiteNum) ? `<div><b>KUMITE:</b> Mata ${c.kumiteMat||'-'} / Walki: ${c.kumiteNum||'-'}</div>` : ''}
+                        ${(c.kataMat || c.kataNum) ? `<div><b>🥋 KATA:</b> Mata ${c.kataMat||'-'} / Walki: ${c.kataNum||'-'}</div>` : ''}
+                        ${(c.kumiteMat || c.kumiteNum) ? `<div><b>🥊 KUMITE:</b> Mata ${c.kumiteMat||'-'} / Walki: ${c.kumiteNum||'-'}</div>` : ''}
                         ${(!c.kataMat && !c.kataNum && !c.kumiteMat && !c.kumiteNum) ? '<i>Brak przypisanych walk</i>' : ''}
                     </div>
 
-                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:5px; border-radius:8px">
-                        <span style="font-size:10px; font-weight:bold; color:#888">WYNIK:</span>
-                        <div class="medal-btn ${c.place==1?'active':''}" style="${c.place==1?'background:var(--gold); border-color:var(--gold)':''}" onclick="setResult('${cid}', 1)">🥇</div>
-                        <div class="medal-btn ${c.place==2?'active':''}" style="${c.place==2?'background:var(--silver); border-color:var(--silver)':''}" onclick="setResult('${cid}', 2)">🥈</div>
-                        <div class="medal-btn ${c.place==3?'active':''}" style="${c.place==3?'background:var(--bronze); border-color:var(--bronze)':''}" onclick="setResult('${cid}', 3)">🥉</div>
-                        <div class="medal-btn" onclick="setResult('${cid}', 0)" style="font-size:10px; color:#888; border:1px dashed #ccc">X</div>
+                    <div style="margin-top:8px; display:flex; align-items:center; gap:5px; background:#fff8e1; padding:5px; border-radius:5px">
+                        <span style="font-size:10px; font-weight:bold; color:#ffa000; width:50px">KATA:</span>
+                        <div class="medal-btn ${c.placeKata==1?'active':''}" style="${c.placeKata==1?'background:var(--gold); border-color:var(--gold)':''}" onclick="setResult('${cid}', 'kata', 1)">🥇</div>
+                        <div class="medal-btn ${c.placeKata==2?'active':''}" style="${c.placeKata==2?'background:var(--silver); border-color:var(--silver)':''}" onclick="setResult('${cid}', 'kata', 2)">🥈</div>
+                        <div class="medal-btn ${c.placeKata==3?'active':''}" style="${c.placeKata==3?'background:var(--bronze); border-color:var(--bronze)':''}" onclick="setResult('${cid}', 'kata', 3)">🥉</div>
+                        <div class="medal-btn" onclick="setResult('${cid}', 'kata', 0)" style="font-size:10px; color:#888; border:1px dashed #ccc; width:20px; height:20px">x</div>
+                    </div>
+
+                    <div style="margin-top:4px; display:flex; align-items:center; gap:5px; background:#e3f2fd; padding:5px; border-radius:5px">
+                        <span style="font-size:10px; font-weight:bold; color:#1976d2; width:50px">KUMITE:</span>
+                        <div class="medal-btn ${c.placeKumite==1?'active':''}" style="${c.placeKumite==1?'background:var(--gold); border-color:var(--gold)':''}" onclick="setResult('${cid}', 'kumite', 1)">🥇</div>
+                        <div class="medal-btn ${c.placeKumite==2?'active':''}" style="${c.placeKumite==2?'background:var(--silver); border-color:var(--silver)':''}" onclick="setResult('${cid}', 'kumite', 2)">🥈</div>
+                        <div class="medal-btn ${c.placeKumite==3?'active':''}" style="${c.placeKumite==3?'background:var(--bronze); border-color:var(--bronze)':''}" onclick="setResult('${cid}', 'kumite', 3)">🥉</div>
+                        <div class="medal-btn" onclick="setResult('${cid}', 'kumite', 0)" style="font-size:10px; color:#888; border:1px dashed #ccc; width:20px; height:20px">x</div>
                     </div>
 
                     <div style="display:flex; gap:10px; margin-top:10px; justify-content:flex-end">
                         <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px" 
                             onclick="editCompetitor('${cid}', '${c.name}', '${c.year}', '${c.weight}', 
-                            '${c.kataMat||''}', '${c.kataNum||''}', '${c.kumiteMat||''}', '${c.kumiteNum||''}')">EDYTUJ</button>
+                            '${c.kataMat||''}', '${c.kataNum||''}', '${c.kumiteMat||''}', '${c.kumiteNum||''}')">✏️ EDYTUJ / DODAJ WALKI</button>
+                        
                         <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px; border-color:var(--red); color:var(--red)" 
                             onclick="removeCompetitor('${cid}')">USUŃ</button>
                     </div>
@@ -857,11 +868,9 @@
         }
     }
 
+    // Zapisywanie zawodnika (Nowego lub Edytowanego)
     window.saveCompetitor = function() {
-        if (!currentTourId) {
-            alert("Błąd: Nie wybrano turnieju! Zamknij okno i otwórz turniej ponownie.");
-            return;
-        }
+        if (!currentTourId) return alert("Błąd turnieju!");
 
         const id = document.getElementById('t-comp-id').value;
         const name = document.getElementById('t-comp-name').value;
@@ -873,32 +882,38 @@
         const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
         const kumiteNum = document.getElementById('t-comp-kumite-num').value;
 
-        if(!name || !weight) return alert("Podaj Nazwisko i Wagę!");
+        if(!name || !weight) return alert("Uzupełnij Imię i Wagę!");
 
+        // Zbieramy dane z formularza
         const data = { name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum };
         
         showLoader(true);
 
         let promise;
         if(id) {
+            // AKTUALIZACJA (Zachowujemy medale, jeśli były)
             promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
         } else {
+            // TWORZENIE NOWEGO (Domyślnie brak medali)
+            data.placeKata = 0;
+            data.placeKumite = 0;
             promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
         }
 
         promise.then(() => {
             showLoader(false);
-            cancelEditComp();
-            // Sukces - dane same się pojawią dzięki onValue
+            cancelEditComp(); // Czyścimy formularz po zapisie
         }).catch((error) => {
             showLoader(false);
-            alert("Błąd zapisu do bazy: " + error.message);
-            console.error(error);
+            alert("Błąd: " + error.message);
         });
     }
 
-    window.setResult = function(cid, place) {
-        update(ref(db, `tournaments/${currentTourId}/competitors/${cid}`), { place: place });
+    // Ustawianie medalu (rozróżnia typ: 'kata' lub 'kumite')
+    window.setResult = function(cid, type, place) {
+        // type to 'kata' lub 'kumite'
+        const field = (type === 'kata') ? 'placeKata' : 'placeKumite';
+        update(ref(db, `tournaments/${currentTourId}/competitors/${cid}`), { [field]: place });
     }
 
     window.removeCompetitor = function(cid) {
@@ -907,28 +922,39 @@
         }
     }
 
+    // TO JEST KLUCZOWE DLA CIEBIE: Funkcja pobiera dane z karty i wstawia do formularza
     window.editCompetitor = function(cid, name, year, weight, kMat, kNum, kuMat, kuNum) {
+        // 1. Wstawiamy ID (żeby system wiedział, że edytujemy, a nie dodajemy nowego)
         document.getElementById('t-comp-id').value = cid;
+        
+        // 2. WYPEŁNIAMY POLA DANYMI Z BAZY (To naprawia Twój problem!)
         document.getElementById('t-comp-name').value = name;
         document.getElementById('t-comp-year').value = year;
         document.getElementById('t-comp-weight').value = weight;
         
+        // 3. Wypełniamy pola walk
         document.getElementById('t-comp-kata-mat').value = kMat;
         document.getElementById('t-comp-kata-num').value = kNum;
         document.getElementById('t-comp-kumite-mat').value = kuMat;
         document.getElementById('t-comp-kumite-num').value = kuNum;
 
+        // 4. Zmieniamy przycisk na "ZAPISZ ZMIANY"
         const btn = document.getElementById('btn-add-comp');
-        btn.innerText = "ZAPISZ ZMIANY";
+        btn.innerText = "💾 ZAPISZ ZMIANY";
         btn.classList.add('btn-orange');
+        
+        // 5. Pokazujemy przycisk "ANULUJ"
         document.getElementById('btn-cancel-edit').style.display = 'block';
+        
+        // 6. Przewijamy do góry
         document.querySelector('.modal-content').scrollTop = 0;
     }
 
     window.cancelEditComp = function() {
         document.getElementById('t-comp-id').value = '';
         document.getElementById('t-comp-name').value = '';
-        document.getElementById('t-comp-weight').value = '';
+        document.getElementById('t-comp-year').value = ''; // Czyścimy też rok
+        document.getElementById('t-comp-weight').value = ''; // Czyścimy wagę
         
         document.getElementById('t-comp-kata-mat').value = '';
         document.getElementById('t-comp-kata-num').value = '';
@@ -941,21 +967,30 @@
         document.getElementById('btn-cancel-edit').style.display = 'none';
     }
 
+    // Eksport do Excela (zaktualizowany o podział medali)
     window.exportTournamentToExcel = async function() {
-        if(!currentCompetitorsData || currentCompetitorsData.length === 0) return alert("Brak danych do eksportu!");
+        if(!currentCompetitorsData || currentCompetitorsData.length === 0) return alert("Brak danych!");
         if(!confirm("Wysłać dane do Google Sheets?")) return;
 
         showLoader(true);
-        const exportList = currentCompetitorsData.map(c => ({
-            imie: c.name,
-            rocznik: c.year,
-            waga: c.weight,
-            kataMat: c.kataMat,
-            kataNum: c.kataNum,
-            kumiteMat: c.kumiteMat,
-            kumiteNum: c.kumiteNum,
-            wynik: c.place ? `${c.place}. Miejsce` : ""
-        }));
+        
+        const exportList = currentCompetitorsData.map(c => {
+            // Budujemy ładny opis wyniku
+            let wynikStr = "";
+            if(c.placeKata > 0) wynikStr += `KATA: ${c.placeKata}. msc `;
+            if(c.placeKumite > 0) wynikStr += `KUMITE: ${c.placeKumite}. msc`;
+            
+            return {
+                imie: c.name,
+                rocznik: c.year,
+                waga: c.weight,
+                kataMat: c.kataMat,
+                kataNum: c.kataNum,
+                kumiteMat: c.kumiteMat,
+                kumiteNum: c.kumiteNum,
+                wynik: wynikStr // Wysyłamy połączony tekst
+            };
+        });
 
         await fetch(SCRIPT_URL, {
             method: 'POST', body: JSON.stringify({
@@ -968,7 +1003,7 @@
         alert("📤 Dane wysłane!");
     }
 
-    // NOWE: IMPORT ZAWODÓW
+    // Import z Excela (inicjalizuje medale na 0)
     window.importTournamentFromExcel = async function() {
         let defaultName = "Turniej " + formatDateToPL(new Date());
         let sessionName = prompt("Podaj nazwę dla importowanego turnieju:", defaultName);
@@ -980,7 +1015,7 @@
             const candidates = await res.json();
             
             if(candidates.length === 0) { 
-                alert("Pusto lub brak zakładki 'Zawody' w Excelu! (Wymagane kolumny: Imię, Rocznik, Waga)"); 
+                alert("Pusto lub brak zakładki 'Zawody' w Excelu!"); 
                 showLoader(false); return; 
             }
 
@@ -996,46 +1031,19 @@
                     weight: c.waga,
                     kataMat: "", kataNum: "",
                     kumiteMat: "", kumiteNum: "",
-                    place: 0
+                    placeKata: 0,   // Domyślnie brak medalu
+                    placeKumite: 0  // Domyślnie brak medalu
                 };
             });
             
             await update(ref(db), updates);
             showLoader(false);
-            alert(`✅ Zaimportowano ${candidates.length} zawodników do turnieju: "${sessionName}"`);
+            alert(`✅ Zaimportowano ${candidates.length} zawodników!`);
         } catch(e) {
             showLoader(false);
             alert("Błąd importu: " + e);
         }
     }
-
-    window.showTourSuggestions = function(val) {
-        const box = document.getElementById('tour-suggestions');
-        if(val.length < 2) { box.style.display='none'; return; }
-
-        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
-        if(matches.length === 0) { box.style.display='none'; return; }
-
-        box.innerHTML = matches.map(m => `
-            <div class="suggestion-item" onclick="selectTourMember('${m.imie}', '${m.ur}')">
-                <div style="font-weight:bold">${m.imie}</div>
-                <div style="font-size:11px; color:#666">Ur: ${m.ur || 'brak'} | ${m.stopien}</div>
-            </div>
-        `).join('');
-        box.style.display = 'block';
-    }
-
-    window.selectTourMember = function(name, urDate) {
-        document.getElementById('t-comp-name').value = name;
-        if(urDate && urDate.includes('-')) {
-            const parts = urDate.split('-'); 
-            if(parts.length === 3) document.getElementById('t-comp-year').value = parts[2]; 
-        } else if (urDate && urDate.length === 4) {
-            document.getElementById('t-comp-year').value = urDate;
-        }
-        document.getElementById('tour-suggestions').style.display = 'none';
-    }
-
     // --- 5. EGZAMINY ---
     onValue(ref(db, 'exams'), (snap) => {
         const data = snap.val() || {};
@@ -1522,3 +1530,4 @@
 </script>
 </body>
 </html>
+
