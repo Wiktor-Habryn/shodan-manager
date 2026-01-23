@@ -141,7 +141,6 @@
     <div class="content" id="view-platnosci" style="display:none">
         <div class="card">
             <h3>💰 Przyjmij Wpłatę</h3>
-            
             <label style="font-size:12px; color:#888">Kto płaci?</label>
             <div style="position:relative">
                 <input id="pay-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showSuggestions(this.value)">
@@ -432,7 +431,7 @@
     
     // ZMIENNE NAPRAWIONE
     let currentExamData = {}; 
-    let currentCompetitorsData = []; 
+    let currentCompetitorsData = {}; // Zmienione na obiekt dla bezpiecznej edycji
     let activeTournamentListener = null;
 
     // FORMATOWANIE DATY
@@ -755,7 +754,7 @@
         }
     }
 
-// --- 4b. TURNIEJE (Z ROZDZIELONYMI MEDALAMI I POPRAWNĄ EDYCJĄ) ---
+    // --- 4b. TURNIEJE (Z ROZDZIELONYMI MEDALAMI I POPRAWNĄ EDYCJĄ) ---
 
     // Pobieranie listy turniejów
     onValue(ref(db, 'tournaments'), (snap) => {
@@ -809,7 +808,7 @@
         // Renderowanie listy zawodników
         onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
             const comps = snap.val() || {};
-            currentCompetitorsData = Object.values(comps);
+            currentCompetitorsData = comps; // ZAPISUJEMY CAŁY OBIEKT, NIE TABLICĘ!
             
             const compsList = document.getElementById('tournament-competitors-list');
             
@@ -849,9 +848,7 @@
 
                     <div style="display:flex; gap:10px; margin-top:10px; justify-content:flex-end">
                         <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px" 
-                            onclick="editCompetitor('${cid}', '${c.name}', '${c.year}', '${c.weight}', 
-                            '${c.kataMat||''}', '${c.kataNum||''}', '${c.kumiteMat||''}', '${c.kumiteNum||''}')">✏️ EDYTUJ / DODAJ WALKI</button>
-                        
+                            onclick="editCompetitor('${cid}')">✏️ EDYTUJ / DODAJ WALKI</button>
                         <button class="btn btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:10px; border-color:var(--red); color:var(--red)" 
                             onclick="removeCompetitor('${cid}')">USUŃ</button>
                     </div>
@@ -868,7 +865,30 @@
         }
     }
 
-    // Zapisywanie zawodnika (Nowego lub Edytowanego)
+    // NOWA FUNKCJA EDYCJI (BEZPIECZNA)
+    window.editCompetitor = function(cid) {
+        const c = currentCompetitorsData[cid]; // Pobieramy dane z pamięci po ID
+        if (!c) return;
+
+        document.getElementById('t-comp-id').value = cid;
+        
+        // Wypełniamy pola istniejącymi danymi
+        document.getElementById('t-comp-name').value = c.name || "";
+        document.getElementById('t-comp-year').value = c.year || "";
+        document.getElementById('t-comp-weight').value = c.weight || "";
+        
+        document.getElementById('t-comp-kata-mat').value = c.kataMat || "";
+        document.getElementById('t-comp-kata-num').value = c.kataNum || "";
+        document.getElementById('t-comp-kumite-mat').value = c.kumiteMat || "";
+        document.getElementById('t-comp-kumite-num').value = c.kumiteNum || "";
+
+        const btn = document.getElementById('btn-add-comp');
+        btn.innerText = "💾 ZAPISZ ZMIANY";
+        btn.classList.add('btn-orange');
+        document.getElementById('btn-cancel-edit').style.display = 'block';
+        document.querySelector('.modal-content').scrollTop = 0; // Przewiń do góry
+    }
+
     window.saveCompetitor = function() {
         if (!currentTourId) return alert("Błąd turnieju!");
 
@@ -884,17 +904,15 @@
 
         if(!name || !weight) return alert("Uzupełnij Imię i Wagę!");
 
-        // Zbieramy dane z formularza
         const data = { name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum };
         
         showLoader(true);
 
         let promise;
         if(id) {
-            // AKTUALIZACJA (Zachowujemy medale, jeśli były)
             promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
         } else {
-            // TWORZENIE NOWEGO (Domyślnie brak medali)
+            // Nowy zawodnik - domyślnie brak medali
             data.placeKata = 0;
             data.placeKumite = 0;
             promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
@@ -902,16 +920,14 @@
 
         promise.then(() => {
             showLoader(false);
-            cancelEditComp(); // Czyścimy formularz po zapisie
+            cancelEditComp();
         }).catch((error) => {
             showLoader(false);
             alert("Błąd: " + error.message);
         });
     }
 
-    // Ustawianie medalu (rozróżnia typ: 'kata' lub 'kumite')
     window.setResult = function(cid, type, place) {
-        // type to 'kata' lub 'kumite'
         const field = (type === 'kata') ? 'placeKata' : 'placeKumite';
         update(ref(db, `tournaments/${currentTourId}/competitors/${cid}`), { [field]: place });
     }
@@ -922,40 +938,11 @@
         }
     }
 
-    // TO JEST KLUCZOWE DLA CIEBIE: Funkcja pobiera dane z karty i wstawia do formularza
-    window.editCompetitor = function(cid, name, year, weight, kMat, kNum, kuMat, kuNum) {
-        // 1. Wstawiamy ID (żeby system wiedział, że edytujemy, a nie dodajemy nowego)
-        document.getElementById('t-comp-id').value = cid;
-        
-        // 2. WYPEŁNIAMY POLA DANYMI Z BAZY (To naprawia Twój problem!)
-        document.getElementById('t-comp-name').value = name;
-        document.getElementById('t-comp-year').value = year;
-        document.getElementById('t-comp-weight').value = weight;
-        
-        // 3. Wypełniamy pola walk
-        document.getElementById('t-comp-kata-mat').value = kMat;
-        document.getElementById('t-comp-kata-num').value = kNum;
-        document.getElementById('t-comp-kumite-mat').value = kuMat;
-        document.getElementById('t-comp-kumite-num').value = kuNum;
-
-        // 4. Zmieniamy przycisk na "ZAPISZ ZMIANY"
-        const btn = document.getElementById('btn-add-comp');
-        btn.innerText = "💾 ZAPISZ ZMIANY";
-        btn.classList.add('btn-orange');
-        
-        // 5. Pokazujemy przycisk "ANULUJ"
-        document.getElementById('btn-cancel-edit').style.display = 'block';
-        
-        // 6. Przewijamy do góry
-        document.querySelector('.modal-content').scrollTop = 0;
-    }
-
     window.cancelEditComp = function() {
         document.getElementById('t-comp-id').value = '';
         document.getElementById('t-comp-name').value = '';
-        document.getElementById('t-comp-year').value = ''; // Czyścimy też rok
-        document.getElementById('t-comp-weight').value = ''; // Czyścimy wagę
-        
+        document.getElementById('t-comp-year').value = ''; 
+        document.getElementById('t-comp-weight').value = ''; 
         document.getElementById('t-comp-kata-mat').value = '';
         document.getElementById('t-comp-kata-num').value = '';
         document.getElementById('t-comp-kumite-mat').value = '';
@@ -967,15 +954,13 @@
         document.getElementById('btn-cancel-edit').style.display = 'none';
     }
 
-    // Eksport do Excela (zaktualizowany o podział medali)
     window.exportTournamentToExcel = async function() {
-        if(!currentCompetitorsData || currentCompetitorsData.length === 0) return alert("Brak danych!");
+        const comps = Object.values(currentCompetitorsData);
+        if(!comps || comps.length === 0) return alert("Brak danych!");
         if(!confirm("Wysłać dane do Google Sheets?")) return;
 
         showLoader(true);
-        
-        const exportList = currentCompetitorsData.map(c => {
-            // Budujemy ładny opis wyniku
+        const exportList = comps.map(c => {
             let wynikStr = "";
             if(c.placeKata > 0) wynikStr += `KATA: ${c.placeKata}. msc `;
             if(c.placeKumite > 0) wynikStr += `KUMITE: ${c.placeKumite}. msc`;
@@ -988,7 +973,7 @@
                 kataNum: c.kataNum,
                 kumiteMat: c.kumiteMat,
                 kumiteNum: c.kumiteNum,
-                wynik: wynikStr // Wysyłamy połączony tekst
+                wynik: wynikStr
             };
         });
 
@@ -1003,7 +988,6 @@
         alert("📤 Dane wysłane!");
     }
 
-    // Import z Excela (inicjalizuje medale na 0)
     window.importTournamentFromExcel = async function() {
         let defaultName = "Turniej " + formatDateToPL(new Date());
         let sessionName = prompt("Podaj nazwę dla importowanego turnieju:", defaultName);
@@ -1031,11 +1015,10 @@
                     weight: c.waga,
                     kataMat: "", kataNum: "",
                     kumiteMat: "", kumiteNum: "",
-                    placeKata: 0,   // Domyślnie brak medalu
-                    placeKumite: 0  // Domyślnie brak medalu
+                    placeKata: 0,
+                    placeKumite: 0
                 };
             });
-            
             await update(ref(db), updates);
             showLoader(false);
             alert(`✅ Zaimportowano ${candidates.length} zawodników!`);
@@ -1044,6 +1027,34 @@
             alert("Błąd importu: " + e);
         }
     }
+
+    window.showTourSuggestions = function(val) {
+        const box = document.getElementById('tour-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        if(matches.length === 0) { box.style.display='none'; return; }
+
+        box.innerHTML = matches.map(m => `
+            <div class="suggestion-item" onclick="selectTourMember('${m.imie}', '${m.ur}')">
+                <div style="font-weight:bold">${m.imie}</div>
+                <div style="font-size:11px; color:#666">Ur: ${m.ur || 'brak'} | ${m.stopien}</div>
+            </div>
+        `).join('');
+        box.style.display = 'block';
+    }
+
+    window.selectTourMember = function(name, urDate) {
+        document.getElementById('t-comp-name').value = name;
+        if(urDate && urDate.includes('-')) {
+            const parts = urDate.split('-'); 
+            if(parts.length === 3) document.getElementById('t-comp-year').value = parts[2]; 
+        } else if (urDate && urDate.length === 4) {
+            document.getElementById('t-comp-year').value = urDate;
+        }
+        document.getElementById('tour-suggestions').style.display = 'none';
+    }
+
     // --- 5. EGZAMINY ---
     onValue(ref(db, 'exams'), (snap) => {
         const data = snap.val() || {};
@@ -1530,4 +1541,3 @@
 </script>
 </body>
 </html>
-
