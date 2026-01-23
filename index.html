@@ -131,7 +131,7 @@
             <h3>✅ Obecność</h3>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 Lista Obecności</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 HISTORIA TRENINGÓW</button>
         </div>
 
         <div id="att-list" class="card" style="display:none"></div>
@@ -141,6 +141,7 @@
     <div class="content" id="view-platnosci" style="display:none">
         <div class="card">
             <h3>💰 Przyjmij Wpłatę</h3>
+            
             <label style="font-size:12px; color:#888">Kto płaci?</label>
             <div style="position:relative">
                 <input id="pay-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showSuggestions(this.value)">
@@ -165,13 +166,21 @@
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Egzamin" style="width:20px"> Egzamin</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="1 Trening" style="width:20px"> 1 Trening</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Sprzęt</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Inne</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Inne" style="width:20px"> Inne</label>
             </div>
+            
             <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
             
-            <button class="btn btn-green" onclick="submitPayment()">Zapisz</button>
+            <button class="btn" style="background-color:var(--accent); margin-top:15px" onclick="addToPaymentQueue()">➕ DODAJ DO LISTY</button>
 
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 Lista Płatności</button>
+            <div id="pay-queue-container" style="display:none; margin-top:20px; border-top:2px dashed #ccc; padding-top:10px">
+                <label style="font-size:12px; color:#888; font-weight:bold">LISTA DO WYSŁANIA:</label>
+                <div id="pay-queue-list"></div>
+                
+                <button id="btn-send-all" class="btn btn-green" onclick="submitAllPayments()">✅ WYŚLIJ WSZYSTKO (0 zł)</button>
+            </div>
+
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Zobacz historię wpłat</button>
         </div>
     </div>
 
@@ -620,45 +629,130 @@
         document.getElementById('att-list').style.display = 'none';
     }
 
-    // --- 4. PŁATNOŚCI ---
+    // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').valueAsDate = new Date();
+    
+    // Kolejka transakcji (Lista obiektów: {imie, kwota, kat, data, metoda, uwagi})
+    let transactionQueue = [];
 
     window.showSuggestions = function(val) {
         const box = document.getElementById('pay-suggestions');
         if(val.length < 2) { box.style.display='none'; return; }
         const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        
         box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPayMember('${m.imie}')">${m.imie}</div>`).join('');
         box.style.display = 'block';
     }
+
     window.selectPayMember = function(name) {
         document.getElementById('pay-name').value = name;
         document.getElementById('pay-suggestions').style.display='none';
     }
 
-    window.submitPayment = async function() {
+    // 1. DODAWANIE DO KOSZYKA (Lokalnie)
+    window.addToPaymentQueue = function() {
         const imie = document.getElementById('pay-name').value;
         const kwota = document.getElementById('pay-amount').value;
         const cats = Array.from(document.querySelectorAll('.pay-cat:checked')).map(c=>c.value).join(', ');
-        
-        if(!imie || !kwota || !cats) return alert("Uzupełnij dane!");
-        
         const dataWplaty = document.getElementById('pay-date').value; 
+        const metoda = document.getElementById('pay-method').value;
+        const uwagi = document.getElementById('pay-notes').value;
+
+        // Walidacja
+        if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");
+
+        // Dodajemy obiekt do listy
+        transactionQueue.push({
+            imie, kwota, cats, dataWplaty, metoda, uwagi
+        });
+
+        // Czyścimy formularz (ale zostawiamy datę i metodę dla wygody)
+        document.getElementById('pay-name').value = '';
+        document.getElementById('pay-amount').value = '';
+        document.getElementById('pay-notes').value = '';
+        document.querySelectorAll('.pay-cat').forEach(el => el.checked = false);
+        
+        // Odświeżamy widok listy
+        renderPaymentQueue();
+    }
+
+    // 2. RYSOWANIE KOSZYKA
+    function renderPaymentQueue() {
+        const container = document.getElementById('pay-queue-container');
+        const listDiv = document.getElementById('pay-queue-list');
+        const sendBtn = document.getElementById('btn-send-all');
+
+        if (transactionQueue.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        let totalSum = 0;
+
+        listDiv.innerHTML = transactionQueue.map((item, index) => {
+            totalSum += parseFloat(item.kwota);
+            return `
+            <div class="card" style="margin-bottom:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; background:#fff; border-left:4px solid var(--orange)">
+                <div>
+                    <div style="font-weight:bold">${item.imie}</div>
+                    <div style="font-size:12px; color:#666">${item.kwota} zł | ${item.cats}</div>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; border-color:var(--red); color:var(--red); padding:5px 10px" onclick="removeFromQueue(${index})">X</button>
+            </div>
+            `;
+        }).join('');
+
+        sendBtn.innerText = `✅ ZAKSIĘGUJ WSZYSTKO (${totalSum} zł)`;
+    }
+
+    // 3. USUWANIE Z KOSZYKA
+    window.removeFromQueue = function(index) {
+        transactionQueue.splice(index, 1);
+        renderPaymentQueue();
+    }
+
+    // 4. WYSYŁANIE WSZYSTKIEGO DO GOOGLE
+    window.submitAllPayments = async function() {
+        if(transactionQueue.length === 0) return;
+        if(!confirm(`Czy na pewno wysłać ${transactionQueue.length} wpłat?`)) return;
 
         showLoader(true);
-        await fetch(SCRIPT_URL, {
-            method: 'POST', body: JSON.stringify({
-                type: 'newPaymentLog', 
-                imie, 
-                kwota, 
-                dataWplaty: dataWplaty, 
-                metoda: document.getElementById('pay-method').value,
-                kategorie: cats, 
-                uwagi: document.getElementById('pay-notes').value
-            })
-        });
-        showLoader(false);
-        alert("💰 Zaksięgowano!");
-        document.getElementById('pay-amount').value = '';
+        
+        try {
+            let counter = 1;
+            // Pętla wysyłająca po kolei
+            for (const t of transactionQueue) {
+                document.getElementById('loader').innerHTML = `<div style="font-size:40px">💸</div><div style="margin-top:15px">Wysyłam ${counter}/${transactionQueue.length}<br>${t.imie}</div>`;
+                
+                await fetch(SCRIPT_URL, {
+                    method: 'POST', body: JSON.stringify({
+                        type: 'newPaymentLog', 
+                        imie: t.imie, 
+                        kwota: t.kwota, 
+                        dataWplaty: t.dataWplaty, 
+                        metoda: t.metoda, 
+                        kategorie: t.cats, 
+                        uwagi: t.uwagi
+                    })
+                });
+                counter++;
+            }
+            
+            alert("✅ Wszystkie wpłaty zostały zapisane!");
+            
+            // Reset całkowity
+            transactionQueue = [];
+            renderPaymentQueue();
+            
+            // Przywracamy domyślny loader
+            document.getElementById('loader').innerHTML = `<div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div>`;
+
+        } catch(e) {
+            alert("Błąd wysyłania: " + e);
+        } finally {
+            showLoader(false);
+        }
     }
 
     // --- 4b. TURNIEJE (NAPRAWIONE) ---
@@ -1266,7 +1360,7 @@
         }
     }
 
-// Funkcja: Wyświetla dane (Z wyszukiwaniem osoby)
+    // Funkcja: Wyświetla dane (Z wyszukiwaniem osoby)
     window.renderFilteredReport = function() {
         const searchTerm = document.getElementById('report-search').value.toLowerCase().trim();
         const selectedMonth = document.getElementById('report-month-filter').value;
@@ -1388,7 +1482,7 @@
         container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
     }
     
-// --- FUNKCJE POMOCNICZE (BEZ POWTÓRZEŃ) ---
+    // --- FUNKCJE POMOCNICZE (BEZ POWTÓRZEŃ) ---
 
     // 1. Rozwijanie/Zwijanie listy (używane w raporcie obecności)
     window.toggleDetails = function(id) {
@@ -1428,7 +1522,3 @@
 </script>
 </body>
 </html>
-
-
-
-
