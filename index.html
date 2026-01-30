@@ -277,7 +277,6 @@
         <div id="exam-candidates-list" style="margin-bottom:50px"></div>
     </div>
 </div>
-
 <div id="modal-tournament-details" class="modal-overlay">
     <div class="modal-content" style="height:95vh; display:flex; flex-direction:column">
         
@@ -295,17 +294,16 @@
                 <div id="tour-suggestions" class="suggestions"></div>
             </div>
 
-            <div class="row" style="margin-top:5px">
+            <div id="row-year-weight" class="row" style="margin-top:5px">
                 <div style="flex:1">
                     <label style="font-size:10px; color:#888">ROK</label>
-                    <input id="t-comp-year" type="number" placeholder="2010">
+                    <input id="t-comp-year" type="text" placeholder="2010">
                 </div>
                 <div style="flex:1">
-                    <label style="font-size:10px; color:#888">WAGA (kg)</label>
-                    <input id="t-comp-weight" type="number" placeholder="kg">
+                    <label style="font-size:10px; color:#888">WAGA</label>
+                    <input id="t-comp-weight" type="text" placeholder="np. 45 kg">
                 </div>
             </div>
-
             <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px">
                 <label style="font-size:12px; font-weight:bold; color:var(--orange)">🥋 KATA</label>
                 <div class="row">
@@ -334,6 +332,7 @@
         <button class="btn btn-green" style="flex-shrink:0; margin-bottom:10px" onclick="exportTournamentToExcel()">📤 EKSPORTUJ DO "APP_ZAWODY"</button>
     </div>
 </div>
+    
 <div id="modal-edit-member" class="modal-overlay">
     <div class="modal-content">
         <h3>Edycja Klubowicza</h3>
@@ -792,7 +791,7 @@
         }
     }
 
-    // Otwieranie szczegółów turnieju
+// Otwieranie szczegółów turnieju
     window.openTournamentDetails = function(id, name) {
         currentTourId = id;
         currentTourName = name;
@@ -808,7 +807,7 @@
         // Renderowanie listy zawodników
         onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
             const comps = snap.val() || {};
-            currentCompetitorsData = comps; // ZAPISUJEMY CAŁY OBIEKT, NIE TABLICĘ!
+            currentCompetitorsData = comps; 
             
             const compsList = document.getElementById('tournament-competitors-list');
             
@@ -865,67 +864,93 @@
         }
     }
 
-    // NOWA FUNKCJA EDYCJI (BEZPIECZNA)
-    window.editCompetitor = function(cid) {
-        const c = currentCompetitorsData[cid]; // Pobieramy dane z pamięci po ID
-        if (!c) return;
+window.editCompetitor = function(cid) {
+    const c = currentCompetitorsData[cid]; 
+    if (!c) return;
 
-        document.getElementById('t-comp-id').value = cid;
-        
-        // Wypełniamy pola istniejącymi danymi
-        document.getElementById('t-comp-name').value = c.name || "";
-        document.getElementById('t-comp-year').value = c.year || "";
-        document.getElementById('t-comp-weight').value = c.weight || "";
-        
-        document.getElementById('t-comp-kata-mat').value = c.kataMat || "";
-        document.getElementById('t-comp-kata-num').value = c.kataNum || "";
-        document.getElementById('t-comp-kumite-mat').value = c.kumiteMat || "";
-        document.getElementById('t-comp-kumite-num').value = c.kumiteNum || "";
+    // Ustawiamy ukryte ID
+    document.getElementById('t-comp-id').value = cid;
+    
+    // Wpisujemy Imię
+    document.getElementById('t-comp-name').value = c.name || "";
+    
+    // --- WCZYTUJEMY ROK I WAGĘ ---
+    // Sprawdzamy czy dane istnieją. Jeśli nie, wstawiamy pusty ciąg.
+    // Dzięki type="text" w HTML, wartość "45 kg" wyświetli się poprawnie.
+    document.getElementById('t-comp-year').value = (c.year !== undefined && c.year !== null) ? c.year : "";
+    document.getElementById('t-comp-weight').value = (c.weight !== undefined && c.weight !== null) ? c.weight : "";
 
-        const btn = document.getElementById('btn-add-comp');
-        btn.innerText = "💾 ZAPISZ ZMIANY";
-        btn.classList.add('btn-orange');
-        document.getElementById('btn-cancel-edit').style.display = 'block';
-        document.querySelector('.modal-content').scrollTop = 0; // Przewiń do góry
+    // Upewniamy się, że wiersz jest widoczny (na wszelki wypadek)
+    const rowDiv = document.getElementById('row-year-weight');
+    if(rowDiv) rowDiv.style.display = 'flex';
+
+    // Reszta pól (Maty)
+    document.getElementById('t-comp-kata-mat').value = c.kataMat || "";
+    document.getElementById('t-comp-kata-num').value = c.kataNum || "";
+    document.getElementById('t-comp-kumite-mat').value = c.kumiteMat || "";
+    document.getElementById('t-comp-kumite-num').value = c.kumiteNum || "";
+
+    // Zmieniamy przycisk na "ZAPISZ"
+    const btn = document.getElementById('btn-add-comp');
+    btn.innerText = "💾 ZAPISZ ZMIANY";
+    btn.classList.add('btn-orange');
+    
+    // Pokazujemy przycisk Anuluj
+    document.getElementById('btn-cancel-edit').style.display = 'block';
+    
+    // Przewijamy do góry
+    document.querySelector('#modal-tournament-details .modal-content').scrollTop = 0; 
+}
+
+window.saveCompetitor = function() {
+    if (!currentTourId) return alert("Błąd turnieju!");
+
+    const id = document.getElementById('t-comp-id').value;
+    const name = document.getElementById('t-comp-name').value;
+    
+    // Pobieramy Rok i Wagę jako tekst (zgodnie z Twoim HTML)
+    const year = document.getElementById('t-comp-year').value;
+    const weight = document.getElementById('t-comp-weight').value;
+    
+    const kataMat = document.getElementById('t-comp-kata-mat').value;
+    const kataNum = document.getElementById('t-comp-kata-num').value;
+    const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
+    const kumiteNum = document.getElementById('t-comp-kumite-num').value;
+
+    if(!name) return alert("Musisz podać co najmniej Imię i Nazwisko!");
+
+    // Tworzymy obiekt danych
+    const data = { 
+        name, 
+        year, 
+        weight, 
+        kataMat, 
+        kataNum, 
+        kumiteMat, 
+        kumiteNum 
+    };
+
+    showLoader(true);
+
+    let promise;
+    if(id) {
+        // AKTUALIZACJA (Edycja)
+        promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
+    } else {
+        // DODANIE NOWEGO
+        data.placeKata = 0;
+        data.placeKumite = 0;
+        promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
     }
 
-    window.saveCompetitor = function() {
-        if (!currentTourId) return alert("Błąd turnieju!");
-
-        const id = document.getElementById('t-comp-id').value;
-        const name = document.getElementById('t-comp-name').value;
-        const year = document.getElementById('t-comp-year').value;
-        const weight = document.getElementById('t-comp-weight').value;
-        
-        const kataMat = document.getElementById('t-comp-kata-mat').value;
-        const kataNum = document.getElementById('t-comp-kata-num').value;
-        const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
-        const kumiteNum = document.getElementById('t-comp-kumite-num').value;
-
-        if(!name || !weight) return alert("Uzupełnij Imię i Wagę!");
-
-        const data = { name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum };
-        
-        showLoader(true);
-
-        let promise;
-        if(id) {
-            promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
-        } else {
-            // Nowy zawodnik - domyślnie brak medali
-            data.placeKata = 0;
-            data.placeKumite = 0;
-            promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
-        }
-
-        promise.then(() => {
-            showLoader(false);
-            cancelEditComp();
-        }).catch((error) => {
-            showLoader(false);
-            alert("Błąd: " + error.message);
-        });
-    }
+    promise.then(() => {
+        showLoader(false);
+        cancelEditComp(); // Czyści formularz
+    }).catch((error) => {
+        showLoader(false);
+        alert("Błąd: " + error.message);
+    });
+}
 
     window.setResult = function(cid, type, place) {
         const field = (type === 'kata') ? 'placeKata' : 'placeKumite';
@@ -938,21 +963,23 @@
         }
     }
 
-    window.cancelEditComp = function() {
-        document.getElementById('t-comp-id').value = '';
-        document.getElementById('t-comp-name').value = '';
-        document.getElementById('t-comp-year').value = ''; 
-        document.getElementById('t-comp-weight').value = ''; 
-        document.getElementById('t-comp-kata-mat').value = '';
-        document.getElementById('t-comp-kata-num').value = '';
-        document.getElementById('t-comp-kumite-mat').value = '';
-        document.getElementById('t-comp-kumite-num').value = '';
-        
-        const btn = document.getElementById('btn-add-comp');
-        btn.innerText = "DODAJ ZAWODNIKA";
-        btn.classList.remove('btn-orange');
-        document.getElementById('btn-cancel-edit').style.display = 'none';
-    }
+window.cancelEditComp = function() {
+    document.getElementById('t-comp-id').value = "";
+    document.getElementById('t-comp-name').value = "";
+    
+    document.getElementById('t-comp-year').value = "";
+    document.getElementById('t-comp-weight').value = "";
+    
+    document.getElementById('t-comp-kata-mat').value = "";
+    document.getElementById('t-comp-kata-num').value = "";
+    document.getElementById('t-comp-kumite-mat').value = "";
+    document.getElementById('t-comp-kumite-num').value = "";
+
+    const btn = document.getElementById('btn-add-comp');
+    btn.innerText = "DODAJ ZAWODNIKA";
+    btn.classList.remove('btn-orange');
+    document.getElementById('btn-cancel-edit').style.display = 'none';
+}
 
     window.exportTournamentToExcel = async function() {
         const comps = Object.values(currentCompetitorsData);
@@ -1541,3 +1568,4 @@
 </script>
 </body>
 </html>
+
