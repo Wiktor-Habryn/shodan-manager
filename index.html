@@ -285,44 +285,53 @@
             <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="closeTournamentModal()">ZAMKNIJ</button>
         </div>
 
-        <div class="card" style="background:var(--bg); border:1px solid var(--border); flex-shrink:0">
-            <input type="hidden" id="t-comp-id"> 
+        <div class="card" style="background:var(--bg); border:1px solid var(--border); flex-shrink:0; padding:10px">
             
-            <label style="font-size:10px; color:#888">ZAWODNIK</label>
-            <div style="position:relative">
-                <input id="t-comp-name" placeholder="Zacznij wpisywać nazwisko..." onkeyup="showTourSuggestions(this.value)" autocomplete="off">
-                <div id="tour-suggestions" class="suggestions"></div>
+            <div onclick="toggleCompForm()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:bold; font-size:13px; color:var(--accent)">
+                <span>👤 ZARZĄDZANIE ZAWODNIKIEM</span>
+                <span id="form-toggle-icon">▼</span>
             </div>
 
-            <div id="row-year-weight" class="row" style="margin-top:5px">
-                <div style="flex:1">
-                    <label style="font-size:10px; color:#888">ROK</label>
-                    <input id="t-comp-year" type="text" placeholder="2010">
+            <div id="comp-form-body" style="display:block; margin-top:10px; border-top:1px solid #ddd; padding-top:10px">
+                <input type="hidden" id="t-comp-id"> 
+                
+                <label style="font-size:10px; color:#888">ZAWODNIK</label>
+                <div style="position:relative">
+                    <input id="t-comp-name" placeholder="Zacznij wpisywać nazwisko..." onkeyup="showTourSuggestions(this.value)" autocomplete="off">
+                    <div id="tour-suggestions" class="suggestions"></div>
                 </div>
-                <div style="flex:1">
-                    <label style="font-size:10px; color:#888">WAGA</label>
-                    <input id="t-comp-weight" type="text" placeholder="np. 45 kg">
-                </div>
-            </div>
-            <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px">
-                <label style="font-size:12px; font-weight:bold; color:var(--orange)">🥋 KATA</label>
-                <div class="row">
-                    <div style="flex:1"><input id="t-comp-kata-mat" placeholder="Mata" style="font-size:13px"></div>
-                    <div style="flex:1"><input id="t-comp-kata-num" placeholder="Nr Walk (np. 5, 12)" style="font-size:13px"></div>
-                </div>
-            </div>
 
-            <div style="margin-top:5px; padding-top:5px">
-                <label style="font-size:12px; font-weight:bold; color:var(--accent)">🥊 KUMITE</label>
-                <div class="row">
-                    <div style="flex:1"><input id="t-comp-kumite-mat" placeholder="Mata" style="font-size:13px"></div>
-                    <div style="flex:1"><input id="t-comp-kumite-num" placeholder="Nr Walk (np. 8, 15)" style="font-size:13px"></div>
+                <div id="row-year-weight" class="row" style="margin-top:5px">
+                    <div style="flex:1">
+                        <label style="font-size:10px; color:#888">ROK</label>
+                        <input id="t-comp-year" type="text" placeholder="2010">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:10px; color:#888">WAGA</label>
+                        <input id="t-comp-weight" type="text" placeholder="np. 45 kg">
+                    </div>
                 </div>
-            </div>
 
-            <button id="btn-add-comp" class="btn" onclick="saveCompetitor()">DODAJ ZAWODNIKA</button>
-            <button id="btn-cancel-edit" class="btn btn-outline" style="display:none; margin-top:5px" onclick="cancelEditComp()">ANULUJ EDYCJĘ</button>
-        </div>
+                <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px">
+                    <label style="font-size:12px; font-weight:bold; color:var(--orange)">🥋 KATA</label>
+                    <div class="row">
+                        <div style="flex:1"><input id="t-comp-kata-mat" placeholder="Mata" style="font-size:13px"></div>
+                        <div style="flex:1"><input id="t-comp-kata-num" placeholder="Nr Walk (np. 5, 12)" style="font-size:13px"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:5px; padding-top:5px">
+                    <label style="font-size:12px; font-weight:bold; color:var(--accent)">🥊 KUMITE</label>
+                    <div class="row">
+                        <div style="flex:1"><input id="t-comp-kumite-mat" placeholder="Mata" style="font-size:13px"></div>
+                        <div style="flex:1"><input id="t-comp-kumite-num" placeholder="Nr Walk (np. 8, 15)" style="font-size:13px"></div>
+                    </div>
+                </div>
+
+                <button id="btn-add-comp" class="btn" onclick="saveCompetitor()">DODAJ ZAWODNIKA</button>
+                <button id="btn-cancel-edit" class="btn btn-outline" style="display:none; margin-top:5px" onclick="cancelEditComp()">ANULUJ EDYCJĘ</button>
+            </div>
+            </div>
 
         <div style="flex:1; overflow-y:auto; margin-top:10px">
             <h4 style="margin:0 0 10px 0">Lista startowa:</h4>
@@ -863,44 +872,35 @@
             activeTournamentListener = null;
         }
     }
-
 window.editCompetitor = function(cid) {
-    const c = currentCompetitorsData[cid]; 
-    if (!c) return;
+        // --- NOWOŚĆ: WYMUSZAMY OTWARCIE FORMULARZA ---
+        toggleCompForm(true);
+        // ---------------------------------------------
 
-    // Ustawiamy ukryte ID
-    document.getElementById('t-comp-id').value = cid;
-    
-    // Wpisujemy Imię
-    document.getElementById('t-comp-name').value = c.name || "";
-    
-    // --- WCZYTUJEMY ROK I WAGĘ ---
-    // Sprawdzamy czy dane istnieją. Jeśli nie, wstawiamy pusty ciąg.
-    // Dzięki type="text" w HTML, wartość "45 kg" wyświetli się poprawnie.
-    document.getElementById('t-comp-year').value = (c.year !== undefined && c.year !== null) ? c.year : "";
-    document.getElementById('t-comp-weight').value = (c.weight !== undefined && c.weight !== null) ? c.weight : "";
+        const c = currentCompetitorsData[cid]; 
+        if (!c) return;
 
-    // Upewniamy się, że wiersz jest widoczny (na wszelki wypadek)
-    const rowDiv = document.getElementById('row-year-weight');
-    if(rowDiv) rowDiv.style.display = 'flex';
+        document.getElementById('t-comp-id').value = cid;
+        document.getElementById('t-comp-name').value = c.name || "";
+        
+        document.getElementById('t-comp-year').value = (c.year !== undefined && c.year !== null) ? c.year : "";
+        document.getElementById('t-comp-weight').value = (c.weight !== undefined && c.weight !== null) ? c.weight : "";
 
-    // Reszta pól (Maty)
-    document.getElementById('t-comp-kata-mat').value = c.kataMat || "";
-    document.getElementById('t-comp-kata-num').value = c.kataNum || "";
-    document.getElementById('t-comp-kumite-mat').value = c.kumiteMat || "";
-    document.getElementById('t-comp-kumite-num').value = c.kumiteNum || "";
+        const rowDiv = document.getElementById('row-year-weight');
+        if(rowDiv) rowDiv.style.display = 'flex';
 
-    // Zmieniamy przycisk na "ZAPISZ"
-    const btn = document.getElementById('btn-add-comp');
-    btn.innerText = "💾 ZAPISZ ZMIANY";
-    btn.classList.add('btn-orange');
-    
-    // Pokazujemy przycisk Anuluj
-    document.getElementById('btn-cancel-edit').style.display = 'block';
-    
-    // Przewijamy do góry
-    document.querySelector('#modal-tournament-details .modal-content').scrollTop = 0; 
-}
+        document.getElementById('t-comp-kata-mat').value = c.kataMat || "";
+        document.getElementById('t-comp-kata-num').value = c.kataNum || "";
+        document.getElementById('t-comp-kumite-mat').value = c.kumiteMat || "";
+        document.getElementById('t-comp-kumite-num').value = c.kumiteNum || "";
+
+        const btn = document.getElementById('btn-add-comp');
+        btn.innerText = "💾 ZAPISZ ZMIANY";
+        btn.classList.add('btn-orange');
+        document.getElementById('btn-cancel-edit').style.display = 'block';
+        
+        document.querySelector('#modal-tournament-details .modal-content').scrollTop = 0; 
+    }
 
 window.saveCompetitor = function() {
     if (!currentTourId) return alert("Błąd turnieju!");
@@ -1565,7 +1565,29 @@ window.cancelEditComp = function() {
         setupMonthFilter(reportsCache.attendance);
         document.getElementById('modal-reports').style.display = 'flex';
     }
+window.toggleCompForm = function(forceOpen = false) {
+        const body = document.getElementById('comp-form-body');
+        const icon = document.getElementById('form-toggle-icon');
+        
+        // Jeśli forceOpen jest true, to wymuszamy otwarcie (używane przy edycji)
+        if (forceOpen) {
+            body.style.display = 'block';
+            icon.innerText = '▼';
+            return;
+        }
+
+        // Standardowe przełączanie
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            icon.innerText = '▼';
+        } else {
+            body.style.display = 'none';
+            icon.innerText = '▲'; // Strzałka w górę (lub w bok, jak wolisz: ▶)
+        }
+    }
+    
 </script>
 </body>
 </html>
+
 
