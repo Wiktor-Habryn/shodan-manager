@@ -102,9 +102,33 @@
     </div>
 
     <div class="content" id="view-klub">
-        <div class="card" style="display:flex; gap:10px">
-            <input id="search-member" placeholder="🔍 Szukaj ucznia..." onkeyup="renderMembers()">
-            <button class="btn btn-outline" style="width:auto; margin:0;" onclick="syncMembers()">🔄</button>
+        <div class="card" style="padding:10px; border-left:4px solid var(--accent)">
+            
+            <div onclick="toggleAddMemberForm()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:bold; color:var(--accent); font-size:14px">
+                <span>👤 REJESTRACJA NOWEGO UCZNIA</span>
+                <span id="add-mem-icon">▼</span>
+            </div>
+
+            <div id="add-member-body" style="display:none; margin-top:15px; padding-top:10px; border-top:1px solid #eee">
+                <input id="new-name" placeholder="Imię i Nazwisko" style="font-weight:bold">
+                
+                <div class="row">
+                    <div style="flex:1">
+                        <label style="font-size:10px;color:#888">Data urodzenia</label>
+                        <input id="new-date" type="date">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:10px;color:#888">Stopień</label>
+                        <select id="new-rank"></select>
+                    </div>
+                </div>
+                
+                <label style="font-size:10px;color:#888; margin-top:5px; display:block">Grupa</label>
+                <select id="new-group">
+                    </select>
+                
+                <button class="btn btn-green" style="margin-top:15px" onclick="addNewMember()">💾 ZAPISZ DO BAZY</button>
+            </div>
         </div>
         
         <div class="filters-scroll" id="club-group-filters"></div>
@@ -525,7 +549,7 @@
     renderGroupFilters();
     renderMembers();
 
-    window.addNewMember = async function() {
+   window.addNewMember = async function() {
         const imie = document.getElementById('new-name').value;
         const rawDate = document.getElementById('new-date').value;
         const stopien = document.getElementById('new-rank').value || "Biały pas";
@@ -535,13 +559,26 @@
         const formattedDate = formatDateToPL(rawDate);
 
         showLoader(true);
+        
+        // Wysyłamy do Google Sheets
         await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({type:'addMember', imie, rok: formattedDate, stopien, grupa})});
+        
+        // Aktualizujemy lokalną bazę
         members.push({imie, ur: formattedDate, stopien, grupa});
         localStorage.setItem('sh_members', JSON.stringify(members));
         
         renderMembers();
         renderGroupFilters();
-        document.getElementById('add-member-form').style.display='none';
+        
+        // --- ZMIANA TUTAJ ---
+        // 1. Czyścimy pola (żeby nie trzeba było kasować ręcznie przy kolejnym dodawaniu)
+        document.getElementById('new-name').value = '';
+        document.getElementById('new-date').value = '';
+
+        // 2. Zwijamy pasek używając nowej funkcji (zmieni też strzałkę na ▼)
+        toggleAddMemberForm(); 
+        // --------------------
+
         showLoader(false);
     }
 
@@ -1585,9 +1622,22 @@ window.toggleCompForm = function(forceOpen = false) {
             icon.innerText = '▲'; // Strzałka w górę (lub w bok, jak wolisz: ▶)
         }
     }
-    
+
+    window.toggleAddMemberForm = function() {
+        const body = document.getElementById('add-member-body');
+        const icon = document.getElementById('add-mem-icon');
+        
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            icon.innerText = '▲';
+        } else {
+            body.style.display = 'none';
+            icon.innerText = '▼';
+        }
+    }
 </script>
 </body>
 </html>
+
 
 
