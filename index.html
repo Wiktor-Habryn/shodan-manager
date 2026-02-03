@@ -102,6 +102,11 @@
     </div>
 
     <div class="content" id="view-klub">
+        <div class="card" style="display:flex; gap:10px">
+            <input id="search-member" placeholder="🔍 Szukaj ucznia..." onkeyup="renderMembers()">
+            <button class="btn btn-outline" style="width:auto; margin:0;" onclick="syncMembers()">🔄</button>
+        </div>
+        
         <div class="card" style="padding:10px; border-left:4px solid var(--accent)">
             
             <div onclick="toggleAddMemberForm()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:bold; color:var(--accent); font-size:14px">
@@ -125,28 +130,13 @@
                 
                 <label style="font-size:10px;color:#888; margin-top:5px; display:block">Grupa</label>
                 <select id="new-group">
-                    </select>
+                </select>
                 
                 <button class="btn btn-green" style="margin-top:15px" onclick="addNewMember()">💾 ZAPISZ DO BAZY</button>
             </div>
         </div>
         
         <div class="filters-scroll" id="club-group-filters"></div>
-
-        <div class="card" onclick="document.getElementById('add-member-form').style.display = 'block'">
-            <h4 style="margin:0">➕ Dodaj nowego ucznia</h4>
-            <div id="add-member-form" style="display:none; margin-top:10px">
-                <input id="new-name" placeholder="Imię i Nazwisko">
-                <div class="row">
-                    <div style="flex:1"><label style="font-size:10px;color:#888">Data urodzenia</label><input id="new-date" type="date"></div>
-                    <div style="flex:1"><label style="font-size:10px;color:#888">Stopień</label><select id="new-rank"></select></div>
-                </div>
-                <select id="new-group">
-                    <option>DZIECI 17-18</option><option>DZIECI 18-19</option><option>DOROŚLI</option><option>NOWA GRUPA</option>
-                </select>
-                <button class="btn" onclick="addNewMember()">ZAPISZ</button>
-            </div>
-        </div>
         <div id="members-list"></div>
     </div>
 
@@ -355,7 +345,7 @@
                 <button id="btn-add-comp" class="btn" onclick="saveCompetitor()">DODAJ ZAWODNIKA</button>
                 <button id="btn-cancel-edit" class="btn btn-outline" style="display:none; margin-top:5px" onclick="cancelEditComp()">ANULUJ EDYCJĘ</button>
             </div>
-            </div>
+        </div>
 
         <div style="flex:1; overflow-y:auto; margin-top:10px">
             <h4 style="margin:0 0 10px 0">Lista startowa:</h4>
@@ -837,7 +827,7 @@
         }
     }
 
-// Otwieranie szczegółów turnieju
+    // Otwieranie szczegółów turnieju
     window.openTournamentDetails = function(id, name) {
         currentTourId = id;
         currentTourName = name;
@@ -909,7 +899,7 @@
             activeTournamentListener = null;
         }
     }
-window.editCompetitor = function(cid) {
+    window.editCompetitor = function(cid) {
         // --- NOWOŚĆ: WYMUSZAMY OTWARCIE FORMULARZA ---
         toggleCompForm(true);
         // ---------------------------------------------
@@ -939,55 +929,55 @@ window.editCompetitor = function(cid) {
         document.querySelector('#modal-tournament-details .modal-content').scrollTop = 0; 
     }
 
-window.saveCompetitor = function() {
-    if (!currentTourId) return alert("Błąd turnieju!");
+    window.saveCompetitor = function() {
+        if (!currentTourId) return alert("Błąd turnieju!");
 
-    const id = document.getElementById('t-comp-id').value;
-    const name = document.getElementById('t-comp-name').value;
-    
-    // Pobieramy Rok i Wagę jako tekst (zgodnie z Twoim HTML)
-    const year = document.getElementById('t-comp-year').value;
-    const weight = document.getElementById('t-comp-weight').value;
-    
-    const kataMat = document.getElementById('t-comp-kata-mat').value;
-    const kataNum = document.getElementById('t-comp-kata-num').value;
-    const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
-    const kumiteNum = document.getElementById('t-comp-kumite-num').value;
+        const id = document.getElementById('t-comp-id').value;
+        const name = document.getElementById('t-comp-name').value;
+        
+        // Pobieramy Rok i Wagę jako tekst (zgodnie z Twoim HTML)
+        const year = document.getElementById('t-comp-year').value;
+        const weight = document.getElementById('t-comp-weight').value;
+        
+        const kataMat = document.getElementById('t-comp-kata-mat').value;
+        const kataNum = document.getElementById('t-comp-kata-num').value;
+        const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
+        const kumiteNum = document.getElementById('t-comp-kumite-num').value;
 
-    if(!name) return alert("Musisz podać co najmniej Imię i Nazwisko!");
+        if(!name) return alert("Musisz podać co najmniej Imię i Nazwisko!");
 
-    // Tworzymy obiekt danych
-    const data = { 
-        name, 
-        year, 
-        weight, 
-        kataMat, 
-        kataNum, 
-        kumiteMat, 
-        kumiteNum 
-    };
+        // Tworzymy obiekt danych
+        const data = { 
+            name, 
+            year, 
+            weight, 
+            kataMat, 
+            kataNum, 
+            kumiteMat, 
+            kumiteNum 
+        };
 
-    showLoader(true);
+        showLoader(true);
 
-    let promise;
-    if(id) {
-        // AKTUALIZACJA (Edycja)
-        promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
-    } else {
-        // DODANIE NOWEGO
-        data.placeKata = 0;
-        data.placeKumite = 0;
-        promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
+        let promise;
+        if(id) {
+            // AKTUALIZACJA (Edycja)
+            promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
+        } else {
+            // DODANIE NOWEGO
+            data.placeKata = 0;
+            data.placeKumite = 0;
+            promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
+        }
+
+        promise.then(() => {
+            showLoader(false);
+            cancelEditComp(); // Czyści formularz
+        }).catch((error) => {
+            showLoader(false);
+            alert("Błąd: " + error.message);
+        });
     }
-
-    promise.then(() => {
-        showLoader(false);
-        cancelEditComp(); // Czyści formularz
-    }).catch((error) => {
-        showLoader(false);
-        alert("Błąd: " + error.message);
-    });
-}
 
     window.setResult = function(cid, type, place) {
         const field = (type === 'kata') ? 'placeKata' : 'placeKumite';
@@ -1000,23 +990,23 @@ window.saveCompetitor = function() {
         }
     }
 
-window.cancelEditComp = function() {
-    document.getElementById('t-comp-id').value = "";
-    document.getElementById('t-comp-name').value = "";
-    
-    document.getElementById('t-comp-year').value = "";
-    document.getElementById('t-comp-weight').value = "";
-    
-    document.getElementById('t-comp-kata-mat').value = "";
-    document.getElementById('t-comp-kata-num').value = "";
-    document.getElementById('t-comp-kumite-mat').value = "";
-    document.getElementById('t-comp-kumite-num').value = "";
+    window.cancelEditComp = function() {
+        document.getElementById('t-comp-id').value = "";
+        document.getElementById('t-comp-name').value = "";
+        
+        document.getElementById('t-comp-year').value = "";
+        document.getElementById('t-comp-weight').value = "";
+        
+        document.getElementById('t-comp-kata-mat').value = "";
+        document.getElementById('t-comp-kata-num').value = "";
+        document.getElementById('t-comp-kumite-mat').value = "";
+        document.getElementById('t-comp-kumite-num').value = "";
 
-    const btn = document.getElementById('btn-add-comp');
-    btn.innerText = "DODAJ ZAWODNIKA";
-    btn.classList.remove('btn-orange');
-    document.getElementById('btn-cancel-edit').style.display = 'none';
-}
+        const btn = document.getElementById('btn-add-comp');
+        btn.innerText = "DODAJ ZAWODNIKA";
+        btn.classList.remove('btn-orange');
+        document.getElementById('btn-cancel-edit').style.display = 'none';
+    }
 
     window.exportTournamentToExcel = async function() {
         const comps = Object.values(currentCompetitorsData);
@@ -1602,7 +1592,7 @@ window.cancelEditComp = function() {
         setupMonthFilter(reportsCache.attendance);
         document.getElementById('modal-reports').style.display = 'flex';
     }
-window.toggleCompForm = function(forceOpen = false) {
+    window.toggleCompForm = function(forceOpen = false) {
         const body = document.getElementById('comp-form-body');
         const icon = document.getElementById('form-toggle-icon');
         
@@ -1638,6 +1628,3 @@ window.toggleCompForm = function(forceOpen = false) {
 </script>
 </body>
 </html>
-
-
-
