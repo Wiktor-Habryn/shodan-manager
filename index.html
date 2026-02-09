@@ -532,7 +532,7 @@
         }
     });
     
-    // FORMATOWANIE DATY (POPRAWKA STREF CZASOWYCH)
+    // FORMATOWANIE DATY (POPRAWKA STREF CZASOWYCH - NAPRAWIONE)
     function formatDateToPL(inputDate) {
         if (!inputDate) return "";
         let d;
@@ -644,6 +644,8 @@
         const grupa = document.getElementById('new-group').value;
 
         if(!imie || !rawDate) return alert("Podaj Imię i Datę!");
+        
+        // POPRAWKA: Używamy funkcji formatującej
         const formattedDate = formatDateToPL(rawDate);
 
         showLoader(true);
@@ -707,7 +709,6 @@
         alert("Grupa zmieniona!");
     }
 
-    // --- 3. OBECNOŚĆ ---
     // --- 3. OBECNOŚĆ ---
     document.getElementById('att-date').value = getLocalTodayDateString();
     let attSelection = {};
@@ -1745,5 +1746,3 @@
 </script>
 </body>
 </html>
-
-
