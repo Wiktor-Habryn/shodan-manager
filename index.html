@@ -90,12 +90,32 @@
 </head>
 <body>
 
+<div id="auth-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="font-size:60px; margin-bottom:20px">🥋</div>
+    <h2 style="margin:0 0 5px 0">SHODAN Manager</h2>
+    <p style="color:#888; margin:0 0 30px 0">Tylko dla trenerów</p>
+    
+    <div class="card" style="width:100%; max-width:350px; padding:25px">
+        <label style="font-size:12px; color:#888">Email</label>
+        <input id="auth-email" type="email" placeholder="trener@klub.pl" style="margin-bottom:15px">
+        
+        <label style="font-size:12px; color:#888">Hasło</label>
+        <input id="auth-pass" type="password" placeholder="••••••••" style="margin-bottom:20px">
+        
+        <button class="btn" onclick="performLogin()">ZALOGUJ SIĘ</button>
+        
+        <div id="auth-error" style="color:var(--red); font-size:13px; margin-top:10px; text-align:center; display:none">Błąd logowania</div>
+    </div>
+</div>
+
 <div id="loader"><div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div></div>
 
-<div class="app-container">
+<div class="app-container" id="app-content" style="display:none"> 
     <div class="header">
         SHODAN TECHNOLOGY
         <div style="display:flex; gap:10px; align-items:center">
+            <span onclick="appLogout()" style="font-size:20px; cursor:pointer;" title="Wyloguj">🔒</span>
+            
             <div id="conn-status" class="status-dot"></div>
             <span onclick="toggleTheme()" style="font-size:22px; cursor:pointer;">🌓</span>
         </div>
@@ -108,7 +128,6 @@
         </div>
         
         <div class="card" style="padding:10px; border-left:4px solid var(--accent)">
-            
             <div onclick="toggleAddMemberForm()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:bold; color:var(--accent); font-size:14px">
                 <span>👤 REJESTRACJA NOWEGO UCZNIA</span>
                 <span id="add-mem-icon">▼</span>
@@ -403,6 +422,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     // --- KONFIGURACJA ---
     const firebaseConfig = {
@@ -443,6 +463,7 @@
     // --- ZMIENNE GLOBALNE ---
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
     
     // Zmienne stanu aplikacji
     let members = JSON.parse(localStorage.getItem('sh_members')) || [];
@@ -453,8 +474,63 @@
     
     // ZMIENNE NAPRAWIONE
     let currentExamData = {}; 
-    let currentCompetitorsData = {}; // Zmienione na obiekt dla bezpiecznej edycji
+    let currentCompetitorsData = {}; 
     let activeTournamentListener = null;
+
+    // --- LOGIKA LOGOWANIA ---
+    window.performLogin = function() {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        const errDiv = document.getElementById('auth-error');
+        
+        if(!email || !pass) {
+            errDiv.innerText = "Podaj email i hasło";
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        showLoader(true);
+        signInWithEmailAndPassword(auth, email, pass)
+            .then(() => {
+                errDiv.style.display = 'none';
+            })
+            .catch((error) => {
+                showLoader(false);
+                let msg = error.message;
+                if(msg.includes('invalid-email')) msg = "Błędny format emaila";
+                if(msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
+                    msg = "Błędny email lub hasło";
+                }
+                
+                errDiv.innerText = msg;
+                errDiv.style.display = 'block';
+            });
+    }
+
+    window.appLogout = function() {
+        if(confirm("Wylogować?")) {
+            signOut(auth);
+            location.reload();
+        }
+    }
+
+    // GŁÓWNY PUNKT WEJŚCIA
+    onAuthStateChanged(auth, (user) => {
+        showLoader(false);
+        if (user) {
+            // Zalogowany
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'flex';
+            
+            // Pobieramy dane dopiero teraz
+            if(members.length === 0) syncMembers();
+            initAppListeners();
+        } else {
+            // Niezalogowany
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        }
+    });
 
     // FORMATOWANIE DATY
     function formatDateToPL(isoDate) {
@@ -560,14 +636,12 @@
         renderMembers();
         renderGroupFilters();
         
-        // --- ZMIANA TUTAJ ---
-        // 1. Czyścimy pola (żeby nie trzeba było kasować ręcznie przy kolejnym dodawaniu)
+        // 1. Czyścimy pola
         document.getElementById('new-name').value = '';
         document.getElementById('new-date').value = '';
 
-        // 2. Zwijamy pasek używając nowej funkcji (zmieni też strzałkę na ▼)
+        // 2. Zwijamy pasek
         toggleAddMemberForm(); 
-        // --------------------
 
         showLoader(false);
     }
@@ -791,24 +865,44 @@
 
     // --- 4b. TURNIEJE (Z ROZDZIELONYMI MEDALAMI I POPRAWNĄ EDYCJĄ) ---
 
-    // Pobieranie listy turniejów
-    onValue(ref(db, 'tournaments'), (snap) => {
-        const data = snap.val() || {};
-        const listHtml = Object.entries(data).reverse().map(([id, t]) => `
-            <div class="card" onclick="openTournamentDetails('${id}', '${t.name}')" style="display:flex; justify-content:space-between; align-items:center">
-                <div>
-                    <div style="font-weight:bold">${t.name}</div>
-                    <div style="font-size:11px; color:#666">Kliknij, aby zarządzać</div>
-                </div>
-                <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteTournament('${id}', event)">
-                    🗑️
-                </button>
-            </div>
-        `).join('');
+    // Ta funkcja uruchamia się DOPIERO PO zalogowaniu
+    function initAppListeners() {
         
-        const listEl = document.getElementById('tournaments-list');
-        if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#ccc; margin-top:10px">Brak turniejów</div>';
-    });
+        // Pobieranie listy turniejów
+        onValue(ref(db, 'tournaments'), (snap) => {
+            const data = snap.val() || {};
+            const listHtml = Object.entries(data).reverse().map(([id, t]) => `
+                <div class="card" onclick="openTournamentDetails('${id}', '${t.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <div style="font-weight:bold">${t.name}</div>
+                        <div style="font-size:11px; color:#666">Kliknij, aby zarządzać</div>
+                    </div>
+                    <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteTournament('${id}', event)">
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+            
+            const listEl = document.getElementById('tournaments-list');
+            if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#ccc; margin-top:10px">Brak turniejów</div>';
+        });
+
+        // Nasłuch Egzaminów
+        onValue(ref(db, 'exams'), (snap) => {
+            const data = snap.val() || {};
+            document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
+                <div class="card" onclick="openExamSession('${id}', '${s.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <div style="font-weight:bold">${s.name}</div>
+                        <div style="font-size:12px; color:#666">Kliknij, aby otworzyć</div>
+                    </div>
+                    <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteExamSession('${id}', event)">
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+        });
+    }
 
     // Tworzenie turnieju
     window.createTournament = function() {
