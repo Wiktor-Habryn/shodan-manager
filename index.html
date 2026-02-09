@@ -531,28 +531,39 @@
             document.getElementById('app-content').style.display = 'none';
         }
     });
-
-// FORMATOWANIE DATY (POPRAWIONE - NAPRAWIA BŁĄD WCZEŚNIEJSZEGO DNIA)
-    function formatDateToPL(isoDate) {
-        if (!isoDate) return "";
-        
-        // Zabezpieczenie: jeśli przypadkiem dostaniemy pełny obiekt daty, zamieńmy go na string YYYY-MM-DD
-        if (typeof isoDate === 'object' && isoDate instanceof Date) {
-             isoDate = isoDate.toISOString().split('T')[0];
+    
+    // FORMATOWANIE DATY (POPRAWKA STREF CZASOWYCH)
+    function formatDateToPL(inputDate) {
+        if (!inputDate) return "";
+        let d;
+        // Jeśli dostaliśmy datę z inputa (np. "2026-02-09"), tniemy ją ręcznie jako tekst
+        if (typeof inputDate === 'string' && inputDate.includes('-') && inputDate.length === 10) {
+            const parts = inputDate.split('-');
+            if(parts.length === 3) {
+                const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
+                const year = parts[0];
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parts[2];
+                return `${day}-${months[month]}-${year}`;
+            }
         }
-
-        // Sprawdzamy czy format to YYYY-MM-DD (np. 2024-02-09)
-        const parts = isoDate.split('-');
-        if (parts.length !== 3) return isoDate; // Jeśli to nie ten format, zwracamy bez zmian
-
+        // Awaryjnie traktujemy jako zwykły obiekt Date
+        d = new Date(inputDate);
+        if (isNaN(d)) return inputDate;
         const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
-        
-        const year = parts[0];
-        const monthIndex = parseInt(parts[1], 10) - 1; // Zamieniamy "02" na liczbę 1 (indeks tablicy)
-        const day = parts[2];
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = months[d.getMonth()];
+        const year = d.getFullYear();
+        return `${day}-${mon}-${year}`;
+    }
 
-        // Zwracamy w formacie DD-MMM-YYYY
-        return `${day}-${months[monthIndex]}-${year}`;
+    // NOWA FUNKCJA: Pobiera dzisiejszą datę lokalną dla formularzy
+    function getLocalTodayDateString() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // --- 1. KLUB & FILTRY ---
@@ -697,7 +708,8 @@
     }
 
     // --- 3. OBECNOŚĆ ---
-    document.getElementById('att-date').valueAsDate = new Date();
+    // --- 3. OBECNOŚĆ ---
+    document.getElementById('att-date').value = getLocalTodayDateString();
     let attSelection = {};
     let attGroup = "";
 
@@ -749,7 +761,7 @@
     }
 
     // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
-    document.getElementById('pay-date').valueAsDate = new Date();
+    document.getElementById('pay-date').value = getLocalTodayDateString();
     
     // Kolejka transakcji (Lista obiektów: {imie, kwota, kat, data, metoda, uwagi})
     let transactionQueue = [];
@@ -1733,4 +1745,5 @@
 </script>
 </body>
 </html>
+
 
