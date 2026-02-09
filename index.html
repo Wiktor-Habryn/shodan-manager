@@ -532,16 +532,27 @@
         }
     });
 
-    // FORMATOWANIE DATY
+// FORMATOWANIE DATY (POPRAWIONE - NAPRAWIA BŁĄD WCZEŚNIEJSZEGO DNIA)
     function formatDateToPL(isoDate) {
-        if(!isoDate) return "";
+        if (!isoDate) return "";
+        
+        // Zabezpieczenie: jeśli przypadkiem dostaniemy pełny obiekt daty, zamieńmy go na string YYYY-MM-DD
+        if (typeof isoDate === 'object' && isoDate instanceof Date) {
+             isoDate = isoDate.toISOString().split('T')[0];
+        }
+
+        // Sprawdzamy czy format to YYYY-MM-DD (np. 2024-02-09)
+        const parts = isoDate.split('-');
+        if (parts.length !== 3) return isoDate; // Jeśli to nie ten format, zwracamy bez zmian
+
         const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
-        const d = new Date(isoDate);
-        if(isNaN(d)) return isoDate;
-        const day = String(d.getDate()).padStart(2, '0');
-        const mon = months[d.getMonth()];
-        const year = d.getFullYear();
-        return `${day}-${mon}-${year}`;
+        
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1; // Zamieniamy "02" na liczbę 1 (indeks tablicy)
+        const day = parts[2];
+
+        // Zwracamy w formacie DD-MMM-YYYY
+        return `${day}-${months[monthIndex]}-${year}`;
     }
 
     // --- 1. KLUB & FILTRY ---
@@ -1722,3 +1733,4 @@
 </script>
 </body>
 </html>
+
