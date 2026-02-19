@@ -112,7 +112,7 @@
 
 <div class="app-container" id="app-content" style="display:none"> 
     <div class="header">
-        SHODAN TECHNOLOGY
+        SHODAN MANAGER
         <div style="display:flex; gap:10px; align-items:center">
             <span onclick="appLogout()" style="font-size:20px; cursor:pointer;" title="Wyloguj">🔒</span>
             
@@ -450,9 +450,10 @@
         "5 Kyu",  "5.1 Kyu",  "5.2 Kyu",
         "4 Kyu",  "4.1 Kyu",  "4.2 Kyu",
         "3 Kyu",  "3.1 Kyu",  "3.2 Kyu",
-        "2 Kyu", "1 Kyu",
-        "1 DAN", "2 DAN", "3 DAN", "4 DAN", "5 DAN", 
-        "6 DAN", "7 DAN", "8 DAN", "9 DAN", "10 DAN"
+        "2 Kyu",  "2.1 Kyu",  "2.2 Kyu",
+        "1 Kyu",  "1.1 Kyu",  "1.2 Kyu",
+        "1 Dan", "2 Dan", "3 Dan", "4 Dan", "5 Dan", 
+        "6 Dan", "7 Dan", "8 Dan", "9 Dan", "10 Dan"
     ];
 
     function getRankOptions(selectedRank) {
@@ -472,6 +473,11 @@
     let currentProfileName = "";
     let currentTourId = null;
     let currentTourName = "";
+    
+    // --- NOWE: Domyślne filtry dla raportów ---
+    let activePayFilter = "WSZYSTKIE"; 
+    let activeAttReportFilter = "WSZYSTKIE";
+    // ------------------------------------------
     
     // ZMIENNE NAPRAWIONE
     let currentExamData = {}; 
@@ -1550,7 +1556,7 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-    // Funkcja: Buduje listę dostępnych miesięcy w Select
+// Funkcja: Buduje listę dostępnych miesięcy w Select
     function setupMonthFilter(dataArray) {
         const select = document.getElementById('report-month-filter');
         select.innerHTML = "";
@@ -1561,15 +1567,18 @@ window.filterAtt = function(grp, el) {
         // 2. Sortujemy (najnowsze na górze)
         months.sort().reverse();
 
+        // --- ZMIANA: DODAJEMY OPCJĘ "WSZYSTKIE" NA POCZĄTEK ---
+        months.unshift("WSZYSTKIE");
+
         // 3. Wypełniamy listę
         months.forEach(m => {
             const opt = document.createElement("option");
             opt.value = m;
-            opt.text = m; // np. 2026-01
+            opt.text = m === "WSZYSTKIE" ? "📅 CAŁA HISTORIA" : m; 
             select.appendChild(opt);
         });
 
-        // 4. Wyświetlamy pierwszy miesiąc (jeśli są dane)
+        // 4. Wyświetlamy domyślnie pierwszą opcję ("WSZYSTKIE")
         if(months.length > 0) {
             select.selectedIndex = 0;
             renderFilteredReport();
@@ -1586,13 +1595,15 @@ window.filterAtt = function(grp, el) {
         
         let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
         let filtered = [];
-        let isSearchMode = searchTerm.length > 1; // Tryb szukania włączony, jeśli wpisano > 1 znak
+        let isSearchMode = searchTerm.length > 1; 
 
         // --- 1. RAPORT PŁATNOŚCI ---
         if (currentReportType === 'FINANCE') {
-            // Jeśli szukamy: filtruj po imieniu (cała historia). Jeśli nie: filtruj po miesiącu.
             if (isSearchMode) {
                 filtered = reportsCache.payments.filter(p => p.imie.toLowerCase().includes(searchTerm));
+            } else if (selectedMonth === "WSZYSTKIE") {
+                // --- ZMIANA: Pokaż wszystko bez filtrowania daty ---
+                filtered = reportsCache.payments;
             } else {
                 filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
             }
@@ -1613,7 +1624,6 @@ window.filterAtt = function(grp, el) {
                 </div>`;
             });
             
-            // Podsumowanie (zależne od trybu)
             let title = isSearchMode ? `SUMA (WYNIKI WYSZUKIWANIA)` : `SUMA (${selectedMonth})`;
             html = `<div style="text-align:center; font-weight:bold; margin-bottom:10px; padding:10px; background:#e6f4ea; border-radius:8px; color:var(--green); border:1px solid var(--green)">
                         ${title}: ${total.toFixed(2)} zł
@@ -1623,8 +1633,6 @@ window.filterAtt = function(grp, el) {
         } else if (currentReportType === 'ATTENDANCE') {
             
             if (isSearchMode) {
-                // TRYB SZUKANIA OSOBY (Płaska lista dat)
-                // Przeszukujemy WSZYSTKIE wpisy, sprawdzając czy nazwisko jest w liście osób
                 filtered = reportsCache.attendance.filter(a => 
                     (a.listaOsob || []).some(personName => personName.toLowerCase().includes(searchTerm))
                 );
@@ -1645,8 +1653,10 @@ window.filterAtt = function(grp, el) {
                 });
 
             } else {
-                // TRYB STANDARDOWY (MIESIĄCE + GRUPOWANIE)
-                const rawList = reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
+                // --- ZMIANA: Obsługa wyboru "WSZYSTKIE" lub konkretnego miesiąca ---
+                const rawList = selectedMonth === "WSZYSTKIE" 
+                    ? reportsCache.attendance 
+                    : reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
                 
                 if (rawList.length > 0) {
                     filtered = [1]; // Flaga, że są dane
@@ -1691,6 +1701,13 @@ window.filterAtt = function(grp, el) {
                 }
             }
         }
+        
+        html += '</div>';
+        
+        const noDataMsg = isSearchMode ? 'Nie znaleziono takiej osoby.' : 'Brak danych w wybranym okresie.';
+        
+        container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
+    }
         
         html += '</div>';
         
@@ -1773,5 +1790,3 @@ window.filterAtt = function(grp, el) {
 </script>
 </body>
 </html>
-
-
