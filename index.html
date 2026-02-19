@@ -1556,7 +1556,7 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-// Funkcja: Buduje listę dostępnych miesięcy w Select
+    // Funkcja: Buduje listę dostępnych miesięcy w Select
     function setupMonthFilter(dataArray) {
         const select = document.getElementById('report-month-filter');
         select.innerHTML = "";
@@ -1567,10 +1567,10 @@ window.filterAtt = function(grp, el) {
         // 2. Sortujemy (najnowsze na górze)
         months.sort().reverse();
 
-        // --- ZMIANA: DODAJEMY OPCJĘ "WSZYSTKIE" NA POCZĄTEK ---
+        // 3. Dodajemy "WSZYSTKIE" na początek
         months.unshift("WSZYSTKIE");
 
-        // 3. Wypełniamy listę
+        // 4. Wypełniamy listę
         months.forEach(m => {
             const opt = document.createElement("option");
             opt.value = m;
@@ -1578,7 +1578,7 @@ window.filterAtt = function(grp, el) {
             select.appendChild(opt);
         });
 
-        // 4. Wyświetlamy domyślnie pierwszą opcję ("WSZYSTKIE")
+        // 5. Wyświetlamy domyślnie "WSZYSTKIE"
         if(months.length > 0) {
             select.selectedIndex = 0;
             renderFilteredReport();
@@ -1602,7 +1602,6 @@ window.filterAtt = function(grp, el) {
             if (isSearchMode) {
                 filtered = reportsCache.payments.filter(p => p.imie.toLowerCase().includes(searchTerm));
             } else if (selectedMonth === "WSZYSTKIE") {
-                // --- ZMIANA: Pokaż wszystko bez filtrowania daty ---
                 filtered = reportsCache.payments;
             } else {
                 filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
@@ -1653,7 +1652,6 @@ window.filterAtt = function(grp, el) {
                 });
 
             } else {
-                // --- ZMIANA: Obsługa wyboru "WSZYSTKIE" lub konkretnego miesiąca ---
                 const rawList = selectedMonth === "WSZYSTKIE" 
                     ? reportsCache.attendance 
                     : reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
@@ -1708,15 +1706,7 @@ window.filterAtt = function(grp, el) {
         
         container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
     }
-        
-        html += '</div>';
-        
-        // Czyścić pole wyboru miesiąca, jeśli szukamy?
-        const noDataMsg = isSearchMode ? 'Nie znaleziono takiej osoby.' : 'Brak danych w tym miesiącu.';
-        
-        container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
-    }
-    
+
     // --- FUNKCJE POMOCNICZE (BEZ POWTÓRZEŃ) ---
 
     // 1. Rozwijanie/Zwijanie listy (używane w raporcie obecności)
@@ -1754,24 +1744,23 @@ window.filterAtt = function(grp, el) {
         setupMonthFilter(reportsCache.attendance);
         document.getElementById('modal-reports').style.display = 'flex';
     }
+
     window.toggleCompForm = function(forceOpen = false) {
         const body = document.getElementById('comp-form-body');
         const icon = document.getElementById('form-toggle-icon');
         
-        // Jeśli forceOpen jest true, to wymuszamy otwarcie (używane przy edycji)
         if (forceOpen) {
             body.style.display = 'block';
             icon.innerText = '▼';
             return;
         }
 
-        // Standardowe przełączanie
         if (body.style.display === 'none') {
             body.style.display = 'block';
             icon.innerText = '▼';
         } else {
             body.style.display = 'none';
-            icon.innerText = '▲'; // Strzałka w górę (lub w bok, jak wolisz: ▶)
+            icon.innerText = '▲'; 
         }
     }
 
