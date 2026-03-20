@@ -215,6 +215,17 @@
 
             <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności</button>
         </div>
+
+        <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:var(--red)">🔴 Bieżące Zaległości</h3>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--red); color:var(--red)" onclick="fetchAndRenderDebts()">Odśwież 🔄</button>
+            </div>
+            <div id="debts-inline-list" style="margin-top:15px;">
+                <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
+            </div>
+        </div>
+
     </div>
 
     <div class="content" id="view-turnieje" style="display:none">
@@ -467,19 +478,15 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
     
-    // Zmienne stanu aplikacji
     let members = JSON.parse(localStorage.getItem('sh_members')) || [];
     let currentExamSessionId = null;
     let currentProfileName = "";
     let currentTourId = null;
     let currentTourName = "";
     
-    // --- NOWE: Domyślne filtry dla raportów ---
     let activePayFilter = "WSZYSTKIE"; 
     let activeAttReportFilter = "WSZYSTKIE";
-    // ------------------------------------------
     
-    // ZMIENNE NAPRAWIONE
     let currentExamData = {}; 
     let currentCompetitorsData = {}; 
     let activeTournamentListener = null;
@@ -521,29 +528,23 @@
         }
     }
 
-    // GŁÓWNY PUNKT WEJŚCIA
     onAuthStateChanged(auth, (user) => {
         showLoader(false);
         if (user) {
-            // Zalogowany
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-content').style.display = 'flex';
             
-            // Pobieramy dane dopiero teraz
             if(members.length === 0) syncMembers();
             initAppListeners();
         } else {
-            // Niezalogowany
             document.getElementById('auth-screen').style.display = 'flex';
             document.getElementById('app-content').style.display = 'none';
         }
     });
     
-    // FORMATOWANIE DATY (POPRAWKA STREF CZASOWYCH - NAPRAWIONE)
     function formatDateToPL(inputDate) {
         if (!inputDate) return "";
         let d;
-        // Jeśli dostaliśmy datę z inputa (np. "2026-02-09"), tniemy ją ręcznie jako tekst
         if (typeof inputDate === 'string' && inputDate.includes('-') && inputDate.length === 10) {
             const parts = inputDate.split('-');
             if(parts.length === 3) {
@@ -554,7 +555,6 @@
                 return `${day}-${months[month]}-${year}`;
             }
         }
-        // Awaryjnie traktujemy jako zwykły obiekt Date
         d = new Date(inputDate);
         if (isNaN(d)) return inputDate;
         const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
@@ -564,7 +564,6 @@
         return `${day}-${mon}-${year}`;
     }
 
-    // NOWA FUNKCJA: Pobiera dzisiejszą datę lokalną dla formularzy
     function getLocalTodayDateString() {
         const d = new Date();
         const year = d.getFullYear();
@@ -651,27 +650,19 @@
         const grupa = document.getElementById('new-group').value;
 
         if(!imie || !rawDate) return alert("Podaj Imię i Datę!");
-        
-        // POPRAWKA: Używamy funkcji formatującej
         const formattedDate = formatDateToPL(rawDate);
 
         showLoader(true);
-        
-        // Wysyłamy do Google Sheets
         await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({type:'addMember', imie, rok: formattedDate, stopien, grupa})});
         
-        // Aktualizujemy lokalną bazę
         members.push({imie, ur: formattedDate, stopien, grupa});
         localStorage.setItem('sh_members', JSON.stringify(members));
         
         renderMembers();
         renderGroupFilters();
         
-        // 1. Czyścimy pola
         document.getElementById('new-name').value = '';
         document.getElementById('new-date').value = '';
-
-        // 2. Zwijamy pasek
         toggleAddMemberForm(); 
 
         showLoader(false);
@@ -721,23 +712,17 @@
     let attSelection = {};
     let attGroup = "";
 
-window.filterAtt = function(grp, el) {
+    window.filterAtt = function(grp, el) {
         attGroup = grp;
-        
-        // Obsługa wyglądu przycisków (podświetlenie aktywnej grupy)
         document.querySelectorAll('#att-group-filters .chip').forEach(c => c.classList.remove('active'));
         if(el) el.classList.add('active');
         
-        // 1. Filtrujemy listę po grupie
         let list = members.filter(m => m.grupa === grp);
-
-        // 2. Sortujemy alfabetycznie (WAŻNE: Żeby numerki były stałe dla tej samej grupy ludzi)
         list.sort((a, b) => a.imie.localeCompare(b.imie));
 
         document.getElementById('att-list').style.display = 'block';
         document.getElementById('att-send-btn').style.display = 'block';
         
-        // 3. Generujemy HTML z numerkami (index + 1)
         document.getElementById('att-list').innerHTML = list.map((m, index) => `
             <div class="list-item" onclick="toggleAttItem('${m.imie}')" style="cursor:pointer; padding: 12px 10px;">
                 <div style="display:flex; align-items:center; gap:12px">
@@ -757,7 +742,6 @@ window.filterAtt = function(grp, el) {
                     
                     <span style="font-size:16px; font-weight:500">${m.imie}</span>
                 </div>
-
                 <div id="chk-${m.imie.replace(/\s/g,'')}" class="status-dot" style="width:24px; height:24px; border:2px solid #ccc; flex-shrink: 0;"></div>
             </div>
         `).join('');
@@ -796,15 +780,12 @@ window.filterAtt = function(grp, el) {
 
     // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').value = getLocalTodayDateString();
-    
-    // Kolejka transakcji (Lista obiektów: {imie, kwota, kat, data, metoda, uwagi})
     let transactionQueue = [];
 
     window.showSuggestions = function(val) {
         const box = document.getElementById('pay-suggestions');
         if(val.length < 2) { box.style.display='none'; return; }
         const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
-        
         box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPayMember('${m.imie}')">${m.imie}</div>`).join('');
         box.style.display = 'block';
     }
@@ -814,7 +795,6 @@ window.filterAtt = function(grp, el) {
         document.getElementById('pay-suggestions').style.display='none';
     }
 
-    // 1. DODAWANIE DO KOSZYKA (Lokalnie)
     window.addToPaymentQueue = function() {
         const imie = document.getElementById('pay-name').value;
         const kwota = document.getElementById('pay-amount').value;
@@ -823,25 +803,20 @@ window.filterAtt = function(grp, el) {
         const metoda = document.getElementById('pay-method').value;
         const uwagi = document.getElementById('pay-notes').value;
 
-        // Walidacja
         if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");
 
-        // Dodajemy obiekt do listy
         transactionQueue.push({
             imie, kwota, cats, dataWplaty, metoda, uwagi
         });
 
-        // Czyścimy formularz (ale zostawiamy datę i metodę dla wygody)
         document.getElementById('pay-name').value = '';
         document.getElementById('pay-amount').value = '';
         document.getElementById('pay-notes').value = '';
         document.querySelectorAll('.pay-cat').forEach(el => el.checked = false);
         
-        // Odświeżamy widok listy
         renderPaymentQueue();
     }
 
-    // 2. RYSOWANIE KOSZYKA
     function renderPaymentQueue() {
         const container = document.getElementById('pay-queue-container');
         const listDiv = document.getElementById('pay-queue-list');
@@ -871,25 +846,20 @@ window.filterAtt = function(grp, el) {
         sendBtn.innerText = `✅ ZAKSIĘGUJ WSZYSTKO (${totalSum} zł)`;
     }
 
-    // 3. USUWANIE Z KOSZYKA
     window.removeFromQueue = function(index) {
         transactionQueue.splice(index, 1);
         renderPaymentQueue();
     }
 
-    // 4. WYSYŁANIE WSZYSTKIEGO DO GOOGLE
     window.submitAllPayments = async function() {
         if(transactionQueue.length === 0) return;
         if(!confirm(`Czy na pewno wysłać ${transactionQueue.length} wpłat?`)) return;
 
         showLoader(true);
-        
         try {
             let counter = 1;
-            // Pętla wysyłająca po kolei
             for (const t of transactionQueue) {
                 document.getElementById('loader').innerHTML = `<div style="font-size:40px">💸</div><div style="margin-top:15px">Wysyłam ${counter}/${transactionQueue.length}<br>${t.imie}</div>`;
-                
                 await fetch(SCRIPT_URL, {
                     method: 'POST', body: JSON.stringify({
                         type: 'newPaymentLog', 
@@ -903,14 +873,9 @@ window.filterAtt = function(grp, el) {
                 });
                 counter++;
             }
-            
             alert("✅ Wszystkie wpłaty zostały zapisane!");
-            
-            // Reset całkowity
             transactionQueue = [];
             renderPaymentQueue();
-            
-            // Przywracamy domyślny loader
             document.getElementById('loader').innerHTML = `<div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div>`;
 
         } catch(e) {
@@ -920,12 +885,49 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-    // --- 4b. TURNIEJE (Z ROZDZIELONYMI MEDALAMI I POPRAWNĄ EDYCJĄ) ---
-
-    // Ta funkcja uruchamia się DOPIERO PO zalogowaniu
-    function initAppListeners() {
+    // --- NOWY MODUŁ: POBIERANIE ZALEGŁOŚCI DO APLIKACJI ---
+    window.fetchAndRenderDebts = async function() {
+        const container = document.getElementById('debts-inline-list');
+        container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie danych z bazy... ⏳</div>';
         
-        // Pobieranie listy turniejów
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getDebts");
+            const data = await res.json();
+            
+            if(data.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--green); font-weight:bold; padding:10px; background:#e6f4ea; border-radius:8px;">✅ Brak zaległości! Wszyscy opłaceni.</div>';
+                return;
+            }
+            
+            let html = "";
+            data.forEach(month => {
+                html += `<div style="background:#ffe599; padding:6px; font-weight:bold; font-size:12px; text-align:center; border-radius:4px; margin-top:10px; margin-bottom:5px; color:#333;">${month.monthLabel}</div>`;
+                
+                month.debtors.forEach((d, idx) => {
+                    html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
+                        <div>
+                            <div style="font-weight:bold; font-size:14px; color:var(--text);">${idx+1}. ${d.imie}</div>
+                            <div style="font-size:11px; color:#666;">${d.grupa}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:var(--red); font-weight:bold; font-size:12px;">Brak wpłaty ❌</div>
+                            <div style="font-size:11px; color:#888;">Frekwencja: ${d.freq}</div>
+                        </div>
+                    </div>`;
+                });
+            });
+            
+            container.innerHTML = html;
+            
+        } catch(e) {
+            container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
+        }
+    }
+
+
+    // --- 4b. TURNIEJE ---
+    function initAppListeners() {
         onValue(ref(db, 'tournaments'), (snap) => {
             const data = snap.val() || {};
             const listHtml = Object.entries(data).reverse().map(([id, t]) => `
@@ -944,7 +946,6 @@ window.filterAtt = function(grp, el) {
             if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#ccc; margin-top:10px">Brak turniejów</div>';
         });
 
-        // Nasłuch Egzaminów
         onValue(ref(db, 'exams'), (snap) => {
             const data = snap.val() || {};
             document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
@@ -961,7 +962,6 @@ window.filterAtt = function(grp, el) {
         });
     }
 
-    // Tworzenie turnieju
     window.createTournament = function() {
         const input = document.getElementById('t-new-name');
         const name = input.value;
@@ -970,7 +970,6 @@ window.filterAtt = function(grp, el) {
         input.value = ''; 
     }
 
-    // Usuwanie turnieju
     window.deleteTournament = function(id, event) {
         if(event) event.stopPropagation();
         if(confirm("Czy na pewno usunąć ten turniej i listę zawodników?")) {
@@ -978,7 +977,6 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-    // Otwieranie szczegółów turnieju
     window.openTournamentDetails = function(id, name) {
         currentTourId = id;
         currentTourName = name;
@@ -991,7 +989,6 @@ window.filterAtt = function(grp, el) {
         }
         activeTournamentListener = id;
 
-        // Renderowanie listy zawodników
         onValue(ref(db, `tournaments/${id}/competitors`), (snap) => {
             const comps = snap.val() || {};
             currentCompetitorsData = comps; 
@@ -1051,9 +1048,7 @@ window.filterAtt = function(grp, el) {
         }
     }
     window.editCompetitor = function(cid) {
-        // --- NOWOŚĆ: WYMUSZAMY OTWARCIE FORMULARZA ---
         toggleCompForm(true);
-        // ---------------------------------------------
 
         const c = currentCompetitorsData[cid]; 
         if (!c) return;
@@ -1085,11 +1080,8 @@ window.filterAtt = function(grp, el) {
 
         const id = document.getElementById('t-comp-id').value;
         const name = document.getElementById('t-comp-name').value;
-        
-        // Pobieramy Rok i Wagę jako tekst (zgodnie z Twoim HTML)
         const year = document.getElementById('t-comp-year').value;
         const weight = document.getElementById('t-comp-weight').value;
-        
         const kataMat = document.getElementById('t-comp-kata-mat').value;
         const kataNum = document.getElementById('t-comp-kata-num').value;
         const kumiteMat = document.getElementById('t-comp-kumite-mat').value;
@@ -1097,25 +1089,16 @@ window.filterAtt = function(grp, el) {
 
         if(!name) return alert("Musisz podać co najmniej Imię i Nazwisko!");
 
-        // Tworzymy obiekt danych
         const data = { 
-            name, 
-            year, 
-            weight, 
-            kataMat, 
-            kataNum, 
-            kumiteMat, 
-            kumiteNum 
+            name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum 
         };
 
         showLoader(true);
 
         let promise;
         if(id) {
-            // AKTUALIZACJA (Edycja)
             promise = update(ref(db, `tournaments/${currentTourId}/competitors/${id}`), data);
         } else {
-            // DODANIE NOWEGO
             data.placeKata = 0;
             data.placeKumite = 0;
             promise = push(ref(db, `tournaments/${currentTourId}/competitors`), data);
@@ -1123,7 +1106,7 @@ window.filterAtt = function(grp, el) {
 
         promise.then(() => {
             showLoader(false);
-            cancelEditComp(); // Czyści formularz
+            cancelEditComp(); 
         }).catch((error) => {
             showLoader(false);
             alert("Błąd: " + error.message);
@@ -1144,10 +1127,8 @@ window.filterAtt = function(grp, el) {
     window.cancelEditComp = function() {
         document.getElementById('t-comp-id').value = "";
         document.getElementById('t-comp-name').value = "";
-        
         document.getElementById('t-comp-year').value = "";
         document.getElementById('t-comp-weight').value = "";
-        
         document.getElementById('t-comp-kata-mat').value = "";
         document.getElementById('t-comp-kata-num').value = "";
         document.getElementById('t-comp-kumite-mat').value = "";
@@ -1261,21 +1242,6 @@ window.filterAtt = function(grp, el) {
     }
 
     // --- 5. EGZAMINY ---
-    onValue(ref(db, 'exams'), (snap) => {
-        const data = snap.val() || {};
-        document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
-            <div class="card" onclick="openExamSession('${id}', '${s.name}')" style="display:flex; justify-content:space-between; align-items:center">
-                <div>
-                    <div style="font-weight:bold">${s.name}</div>
-                    <div style="font-size:12px; color:#666">Kliknij, aby otworzyć</div>
-                </div>
-                <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteExamSession('${id}', event)">
-                    🗑️
-                </button>
-            </div>
-        `).join('');
-    });
-
     window.createExamSession = function() {
         const name = document.getElementById('exam-session-name').value;
         if(name) push(ref(db, 'exams'), { name });
@@ -1354,12 +1320,10 @@ window.filterAtt = function(grp, el) {
     
     window.closeExamModal = function() { document.getElementById('modal-exam-list').style.display = 'none'; }
 
-    // Aktualizacja stopnia "w locie" po zmianie selecta (żeby przycisk WSZYSCY wiedział co wysłać)
     window.updateCandidateRank = function(examId, cid, newRank) {
         update(ref(db, `exams/${examId}/candidates/${cid}`), { targetRank: newRank });
     }
 
-    // --- FUNKCJA MASOWEGO ZATWIERDZANIA ---
     window.passAllCandidates = async function() {
         const toPass = Object.entries(currentExamData).filter(([k, v]) => v.status === 'WAIT');
         
@@ -1371,22 +1335,16 @@ window.filterAtt = function(grp, el) {
         const bulkList = [];
 
         toPass.forEach(([cid, c]) => {
-            // 1. Zmieniamy status w Firebase (zielony ptaszek)
             updates[`exams/${currentExamSessionId}/candidates/${cid}/status`] = 'PASS';
-            
-            // 2. Dodajemy do listy wysyłkowej do Excela
             bulkList.push({ imie: c.imie, nowyStopien: c.targetRank });
             
-            // 3. Aktualizujemy pamięć telefonu (zakładka Klub)
             const m = members.find(x => x.imie === c.imie);
             if(m) m.stopien = c.targetRank;
         });
 
-        // Wykonujemy
-        await update(ref(db), updates); // Firebase
-        localStorage.setItem('sh_members', JSON.stringify(members)); // Telefon
+        await update(ref(db), updates); 
+        localStorage.setItem('sh_members', JSON.stringify(members)); 
         
-        // Wysyłamy jedną paczkę do Google (obsługuje nawet 100 osób naraz)
         await fetch(SCRIPT_URL, {
             method: 'POST', body: JSON.stringify({ type: 'examPassedBulk', lista: bulkList })
         });
@@ -1457,30 +1415,22 @@ window.filterAtt = function(grp, el) {
     }
     initRankSelects();
 
-// --- FUNKCJE EDYCJI DANYCH OSOBOWYCH (Imię, Data, Pas) ---
-
-    // 1. Inicjalizacja listy stopni w nowym oknie (dodaj to do initRankSelects lub wywołaj osobno)
     const editRankSelect = document.getElementById('edit-new-rank');
     if(editRankSelect) editRankSelect.innerHTML = getRankOptions("Biały pas");
 
-    // 2. Otwieranie okna edycji i wypełnianie go danymi
     window.openEditDetails = function() {
-        // Szukamy danych aktualnie wyświetlanego profilu
         const m = members.find(x => x.imie === currentProfileName);
         if(!m) return;
 
-        // Wypełniamy pola formularza
-        document.getElementById('edit-orig-name').value = m.imie; // Stare imię (klucz do szukania)
-        document.getElementById('edit-new-name').value = m.imie;  // Nowe imię (do edycji)
+        document.getElementById('edit-orig-name').value = m.imie; 
+        document.getElementById('edit-new-name').value = m.imie;  
         
-        // Ustawiamy stopień
         const rankSelect = document.getElementById('edit-new-rank');
         if(rankSelect) rankSelect.innerHTML = getRankOptions(m.stopien);
 
-        // Konwersja daty z formatu polskiego (15-STY-2010) na format inputa HTML (2010-01-15)
         let isoDate = "";
         if(m.ur && m.ur.includes('-')) {
-             const parts = m.ur.split('-'); // [15, STY, 2010]
+             const parts = m.ur.split('-'); 
              const months = ["STY", "LUT", "MAR", "KWI", "MAJ", "CZE", "LIP", "SIE", "WRZ", "PAŹ", "LIS", "GRU"];
              const monthIndex = months.indexOf(parts[1]);
              if(monthIndex > -1) {
@@ -1490,12 +1440,10 @@ window.filterAtt = function(grp, el) {
         }
         document.getElementById('edit-new-dob').value = isoDate;
 
-        // Przełączamy widok: Zamykamy profil -> Otwieramy edycję
         document.getElementById('modal-profile').style.display = 'none';
         document.getElementById('modal-edit-member').style.display = 'flex';
     }
 
-    // 3. Zapisywanie zmian (Wysyłka do Google Apps Script)
     window.saveMemberDetails = async function() {
         const origName = document.getElementById('edit-orig-name').value;
         const newName = document.getElementById('edit-new-name').value;
@@ -1504,12 +1452,10 @@ window.filterAtt = function(grp, el) {
         
         if(!newName) return alert("Nazwisko nie może być puste!");
 
-        // Konwersja daty z powrotem na polski format (dla Excela)
         const prettyDob = formatDateToPL(rawDob);
 
         showLoader(true);
         
-        // Wysyłamy paczkę do backendu (Code.gs obsłuży type: 'updateMemberData')
         await fetch(SCRIPT_URL, {
             method: 'POST', body: JSON.stringify({
                 type: 'updateMemberData',
@@ -1520,7 +1466,6 @@ window.filterAtt = function(grp, el) {
             })
         });
 
-        // Aktualizujemy dane w pamięci telefonu natychmiast (żeby nie trzeba było odświeżać całej bazy)
         const m = members.find(x => x.imie === origName);
         if(m) {
             m.imie = newName;
@@ -1532,17 +1477,13 @@ window.filterAtt = function(grp, el) {
         showLoader(false);
         alert("✅ Dane zaktualizowane!");
         
-        // Zamykamy okno edycji i odświeżamy listę na ekranie
         document.getElementById('modal-edit-member').style.display = 'none';
         renderMembers();
-        
-        // Ponownie otwieramy profil (już z nowymi danymi)
         openProfile(newName);
     }
-    // --- ZAAWANSOWANE RAPORTY (Historia i Finanse) ---
     
     let reportsCache = null;
-    let currentReportType = ""; // 'FINANCE' lub 'ATTENDANCE'
+    let currentReportType = ""; 
 
     async function fetchReports() {
         showLoader(true);
@@ -1556,21 +1497,14 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-    // Funkcja: Buduje listę dostępnych miesięcy w Select
     function setupMonthFilter(dataArray) {
         const select = document.getElementById('report-month-filter');
         select.innerHTML = "";
         
-        // 1. Pobieramy unikalne miesiące z danych
         const months = [...new Set(dataArray.map(item => item.dateKey))];
-        
-        // 2. Sortujemy (najnowsze na górze)
         months.sort().reverse();
-
-        // 3. Dodajemy "WSZYSTKIE" na początek
         months.unshift("WSZYSTKIE");
 
-        // 4. Wypełniamy listę
         months.forEach(m => {
             const opt = document.createElement("option");
             opt.value = m;
@@ -1578,7 +1512,6 @@ window.filterAtt = function(grp, el) {
             select.appendChild(opt);
         });
 
-        // 5. Wyświetlamy domyślnie "WSZYSTKIE"
         if(months.length > 0) {
             select.selectedIndex = 0;
             renderFilteredReport();
@@ -1587,7 +1520,6 @@ window.filterAtt = function(grp, el) {
         }
     }
 
-    // Funkcja: Wyświetla dane (Z wyszukiwaniem osoby)
     window.renderFilteredReport = function() {
         const searchTerm = document.getElementById('report-search').value.toLowerCase().trim();
         const selectedMonth = document.getElementById('report-month-filter').value;
@@ -1597,7 +1529,6 @@ window.filterAtt = function(grp, el) {
         let filtered = [];
         let isSearchMode = searchTerm.length > 1; 
 
-        // --- 1. RAPORT PŁATNOŚCI ---
         if (currentReportType === 'FINANCE') {
             if (isSearchMode) {
                 filtered = reportsCache.payments.filter(p => p.imie.toLowerCase().includes(searchTerm));
@@ -1628,7 +1559,6 @@ window.filterAtt = function(grp, el) {
                         ${title}: ${total.toFixed(2)} zł
                     </div>` + html;
 
-        // --- 2. RAPORT OBECNOŚCI ---
         } else if (currentReportType === 'ATTENDANCE') {
             
             if (isSearchMode) {
@@ -1657,7 +1587,7 @@ window.filterAtt = function(grp, el) {
                     : reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
                 
                 if (rawList.length > 0) {
-                    filtered = [1]; // Flaga, że są dane
+                    filtered = [1]; 
                     const daysMap = {};
                     
                     rawList.forEach(item => {
@@ -1703,13 +1633,9 @@ window.filterAtt = function(grp, el) {
         html += '</div>';
         
         const noDataMsg = isSearchMode ? 'Nie znaleziono takiej osoby.' : 'Brak danych w wybranym okresie.';
-        
         container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
     }
 
-    // --- FUNKCJE POMOCNICZE (BEZ POWTÓRZEŃ) ---
-
-    // 1. Rozwijanie/Zwijanie listy (używane w raporcie obecności)
     window.toggleDetails = function(id) {
         const el = document.getElementById(id);
         if (el) {
@@ -1717,17 +1643,13 @@ window.filterAtt = function(grp, el) {
         }
     }
     
-    // 2. Czyszczenie paska wyszukiwania
     window.clearSearch = function() {
         const input = document.getElementById('report-search');
         if(input) input.value = "";
     }
 
-    // --- PRZYCISKI RAPORTÓW ---
-
-    // PRZYCISK: HISTORIA WPŁAT
     window.showFinanceReport = async function() {
-        clearSearch(); // Czyścimy szukanie przed otwarciem
+        clearSearch(); 
         await fetchReports();
         currentReportType = 'FINANCE';
         document.getElementById('report-title').innerText = "💰 Historia Wpłat";
@@ -1735,9 +1657,8 @@ window.filterAtt = function(grp, el) {
         document.getElementById('modal-reports').style.display = 'flex';
     }
 
-    // PRZYCISK: HISTORIA TRENINGÓW
     window.showAttendanceReport = async function() {
-        clearSearch(); // Czyścimy szukanie przed otwarciem
+        clearSearch(); 
         await fetchReports();
         currentReportType = 'ATTENDANCE';
         document.getElementById('report-title').innerText = "✅ Historia Treningów";
