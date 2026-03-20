@@ -216,12 +216,16 @@
             <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności</button>
         </div>
 
-        <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; color:var(--red)">🔴 Bieżące Zaległości</h3>
-                <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--red); color:var(--red)" onclick="fetchAndRenderDebts()">Odśwież 🔄</button>
+        <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDebtsList()">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:0; color:var(--red)">🔴 Bieżące Zaległości</h3>
+                    <span id="debts-toggle-icon" style="color:var(--red); font-size:14px; font-weight:bold;">▼</span>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--red); color:var(--red)" onclick="event.stopPropagation(); fetchAndRenderDebts()">Odśwież 🔄</button>
             </div>
-            <div id="debts-inline-list" style="margin-top:15px;">
+            
+            <div id="debts-inline-list" style="display:block; margin-top:15px; border-top:1px dashed #ffcccc; padding-top:10px;">
                 <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
             </div>
         </div>
@@ -885,8 +889,10 @@
         }
     }
 
-    // --- NOWY MODUŁ: POBIERANIE ZALEGŁOŚCI DO APLIKACJI ---
+// --- NOWY MODUŁ: POBIERANIE ZALEGŁOŚCI DO APLIKACJI ---
     window.fetchAndRenderDebts = async function() {
+        toggleDebtsList(true); // <--- DODANA LINIJKA: Automatycznie rozwija listę przed pobraniem
+        
         const container = document.getElementById('debts-inline-list');
         container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie danych z bazy... ⏳</div>';
         
@@ -924,7 +930,6 @@
             container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
         }
     }
-
 
     // --- 4b. TURNIEJE ---
     function initAppListeners() {
@@ -1695,6 +1700,25 @@
         } else {
             body.style.display = 'none';
             icon.innerText = '▼';
+        }
+    }
+    // --- FUNKCJA ZWIJANIA/ROZWIJANIA ZALEGŁOŚCI ---
+    window.toggleDebtsList = function(forceOpen = false) {
+        const list = document.getElementById('debts-inline-list');
+        const icon = document.getElementById('debts-toggle-icon');
+        
+        if (forceOpen) {
+            list.style.display = 'block';
+            icon.innerText = '▼';
+            return;
+        }
+
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            icon.innerText = '▼';
+        } else {
+            list.style.display = 'none';
+            icon.innerText = '▲';
         }
     }
 </script>
