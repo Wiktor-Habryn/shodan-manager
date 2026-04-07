@@ -192,19 +192,21 @@
                     <label style="font-size:12px; color:#888">Kiedy wpłacono?</label>
                     <input type="date" id="pay-date">
                 </div>
-                <div style="flex:1">
+                <div style="flex:1; display:none;" id="month-select-container">
                     <label style="font-size:12px; font-weight:bold; color:var(--accent);">Za który miesiąc?</label>
-                    <input type="month" id="pay-for-month" style="border: 2px solid var(--accent); background-color: #e6f2ff;">
+                    <select id="pay-for-month" style="border: 2px solid var(--accent); background-color: #e6f2ff; font-weight:bold; font-size:14px; padding: 11px;"></select>
                 </div>
             </div>
 
             <label style="font-size:12px; color:#888; margin-top:10px; display:block">Za co? (Zaznacz)</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:5px">
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Składka" style="width:20px"> Składka</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px">
+                    <input type="checkbox" class="pay-cat" id="cat-skladka" value="Składka" style="width:20px" onchange="toggleMonthSelect()"> Składka
+                </label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Egzamin" style="width:20px"> Egzamin</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="1 Trening" style="width:20px"> 1 Trening</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Sprzęt</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px"> Członkostwo</label>
+                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Członkostwo" style="width:20px"> Członkostwo</label>
                 <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px"><input type="checkbox" class="pay-cat" value="Inne" style="width:20px"> Inne</label>
             </div>
             
@@ -790,10 +792,38 @@
 
 // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').value = getLocalTodayDateString();
-    // Domyślnie ustawiamy bieżący miesiąc rozliczeniowy
-    document.getElementById('pay-for-month').value = getLocalTodayDateString().substring(0, 7);
     
+    // Dynamiczne generowanie listy miesięcy (od +2 do -6)
+    ;(function populateMonthSelect() {
+        const select = document.getElementById('pay-for-month');
+        if (!select) return;
+        const plMonths = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
+        const today = new Date();
+        let html = "";
+        
+        for (let i = 2; i >= -6; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const year = d.getFullYear();
+            const monthIndex = d.getMonth();
+            const monthIso = String(monthIndex + 1).padStart(2, '0');
+            const isoString = `${year}-${monthIso}`; // Format dla bazy: YYYY-MM
+            const label = `${plMonths[monthIndex]} ${year}`;
+            
+            if (i === 0) {
+                html += `<option value="${isoString}" selected>${label} (Obecny)</option>`;
+            } else {
+                html += `<option value="${isoString}">${label}</option>`;
+            }
+        }
+        select.innerHTML = html;
+    })();
+
     let transactionQueue = [];
+
+    window.toggleMonthSelect = function() {
+        const isChecked = document.getElementById('cat-skladka').checked;
+        document.getElementById('month-select-container').style.display = isChecked ? 'block' : 'none';
+    }
 
     window.showSuggestions = function(val) {
         const box = document.getElementById('pay-suggestions');
@@ -813,14 +843,19 @@
         const kwota = document.getElementById('pay-amount').value;
         const cats = Array.from(document.querySelectorAll('.pay-cat:checked')).map(c=>c.value).join(', ');
         const dataWplaty = document.getElementById('pay-date').value; 
-        const zaMiesiac = document.getElementById('pay-for-month').value; // <-- ODCZYT NOWEGO POLA
+        const zaMiesiac = document.getElementById('pay-for-month').value;
         const metoda = document.getElementById('pay-method').value;
         const uwagi = document.getElementById('pay-notes').value;
 
-        if(!imie || !kwota || !cats || !zaMiesiac) return alert("Uzupełnij: Kto, Kwota, Miesiąc i Za co!");
+        const isSkladka = cats.includes("Składka");
+
+        if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");
+        if(isSkladka && !zaMiesiac) return alert("Wybierz miesiąc dla opłacanej składki!");
 
         transactionQueue.push({
-            imie, kwota, cats, dataWplaty, zaMiesiac, metoda, uwagi
+            imie, kwota, cats, dataWplaty, 
+            zaMiesiac: isSkladka ? zaMiesiac : "", 
+            metoda, uwagi
         });
 
         document.getElementById('pay-name').value = '';
@@ -828,6 +863,7 @@
         document.getElementById('pay-notes').value = '';
         document.querySelectorAll('.pay-cat').forEach(el => el.checked = false);
         
+        toggleMonthSelect(); // <-- Ukrywa pole po dodaniu do koszyka
         renderPaymentQueue();
     }
 
@@ -850,7 +886,9 @@
             <div class="card" style="margin-bottom:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; background:#fff; border-left:4px solid var(--orange)">
                 <div>
                     <div style="font-weight:bold">${item.imie}</div>
-                    <div style="font-size:12px; color:#666">${item.kwota} zł | ${item.cats} <br><span style="color:var(--accent); font-weight:bold;">Za miesiąc: ${item.zaMiesiac}</span></div>
+                    <div style="font-size:12px; color:#666">${item.kwota} zł | ${item.cats} 
+                        ${item.zaMiesiac ? `<br><span style="color:var(--accent); font-weight:bold;">Za miesiąc: ${item.zaMiesiac}</span>` : ''}
+                    </div>
                 </div>
                 <button class="btn btn-outline" style="width:auto; margin:0; border-color:var(--red); color:var(--red); padding:5px 10px" onclick="removeFromQueue(${index})">X</button>
             </div>
@@ -880,7 +918,7 @@
                         imie: t.imie, 
                         kwota: t.kwota, 
                         dataWplaty: t.dataWplaty, 
-                        zaMiesiac: t.zaMiesiac, // <-- WYSYŁAMY DO ARKUSZA
+                        zaMiesiac: t.zaMiesiac, 
                         metoda: t.metoda, 
                         kategorie: t.cats, 
                         uwagi: t.uwagi
