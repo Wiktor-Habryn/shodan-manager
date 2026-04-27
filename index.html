@@ -86,6 +86,48 @@
     /* Style dla medali */
     .medal-btn { width:30px; height:30px; border-radius:50%; border:2px solid #ccc; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
     .medal-btn.active { border-color: transparent; color: white; }
+    
+    @media (min-width: 768px) {
+        /* 1. Pozwalamy aplikacji rozszerzyć się na monitorze */
+        .app-container {
+            max-width: 1200px;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1); /* Dodaje delikatny cień wokół aplikacji na PC */
+        }
+
+        /* 2. Przekształcamy długie listy w siatkę kafelków (Grid) */
+        #members-list, 
+        #att-list, 
+        #tournaments-list, 
+        #exam-sessions-list,
+        #tournament-competitors-list {
+            display: grid;
+            /* Automatycznie dopasowuje liczbę kolumn (kafelek min. 300px szerokości) */
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        /* 3. Usuwamy domyślne marginesy z kafelków, bo Grid sam zarządza odstępami */
+        #members-list .card, 
+        #tournaments-list .card, 
+        #exam-sessions-list .card {
+            margin-bottom: 0; 
+        }
+
+        /* 4. Kosmetyka paska nawigacji pod użycie myszką */
+        .nav-bar {
+            padding: 15px 0;
+            padding-bottom: 15px;
+        }
+        .nav-item {
+            font-size: 13px;
+        }
+        .nav-icon {
+            font-size: 26px;
+        }
+    }
+        
 </style>
 </head>
 <body>
