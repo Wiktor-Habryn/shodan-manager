@@ -93,7 +93,7 @@
             max-width: 1200px;
             border-left: 1px solid var(--border);
             border-right: 1px solid var(--border);
-            box-shadow: 0 0 20px rgba(0,0,0,0.1); /* Dodaje delikatny cień wokół aplikacji na PC */
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
         /* 2. Przekształcamy długie listy w siatkę kafelków (Grid) */
@@ -103,12 +103,11 @@
         #exam-sessions-list,
         #tournament-competitors-list {
             display: grid;
-            /* Automatycznie dopasowuje liczbę kolumn (kafelek min. 300px szerokości) */
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 15px;
         }
 
-        /* 3. Usuwamy domyślne marginesy z kafelków, bo Grid sam zarządza odstępami */
+        /* 3. Usuwamy domyślne marginesy z kafelków */
         #members-list .card, 
         #tournaments-list .card, 
         #exam-sessions-list .card {
@@ -120,15 +119,11 @@
             padding: 15px 0;
             padding-bottom: 15px;
         }
-        .nav-item {
-            font-size: 13px;
-        }
-        .nav-icon {
-            font-size: 26px;
-        }
+        .nav-item { font-size: 13px; }
+        .nav-icon { font-size: 26px; }
     }
         
-</style>
+    </style>
 </head>
 <body>
 
@@ -206,11 +201,24 @@
             <h3>✅ Obecność</h3>
             <input type="date" id="att-date" style="font-weight:bold">
             <div class="filters-scroll" id="att-group-filters"></div>
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showAttendanceReport()">📜 Lista Obecności</button>
         </div>
 
         <div id="att-list" class="card" style="display:none"></div>
-        <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
+        <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 40;" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
+        
+        <div class="card" style="border-left:4px solid var(--accent); margin-top:15px; padding-bottom: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleAttHistoryList()">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:0; color:var(--text)">📜 Historia Treningów</h3>
+                    <span id="att-history-toggle-icon" style="color:var(--text); font-size:14px; font-weight:bold;">▼</span>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--accent); color:var(--accent)" onclick="event.stopPropagation(); fetchAndRenderInlineAttendance()">Odśwież 🔄</button>
+            </div>
+            
+            <div id="att-history-inline-list" style="display:none; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
+                <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
+            </div>
+        </div>
     </div>
 
     <div class="content" id="view-platnosci" style="display:none">
@@ -263,7 +271,7 @@
                 <button id="btn-send-all" class="btn btn-green" onclick="submitAllPayments()">✅ WYŚLIJ WSZYSTKO (0 zł)</button>
             </div>
 
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności</button>
+            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności (Archiwum)</button>
         </div>
 
         <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 10px;">
@@ -275,7 +283,7 @@
                 <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--red); color:var(--red)" onclick="event.stopPropagation(); fetchAndRenderDebts()">Odśwież 🔄</button>
             </div>
             
-            <div id="debts-inline-list" style="display:block; margin-top:15px; border-top:1px dashed #ffcccc; padding-top:10px;">
+            <div id="debts-inline-list" style="display:none; margin-top:15px; border-top:1px dashed #ffcccc; padding-top:10px;">
                 <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
             </div>
         </div>
@@ -376,6 +384,7 @@
         <div id="exam-candidates-list" style="margin-bottom:50px"></div>
     </div>
 </div>
+
 <div id="modal-tournament-details" class="modal-overlay">
     <div class="modal-content" style="height:95vh; display:flex; flex-direction:column">
         
@@ -832,7 +841,7 @@
         document.getElementById('att-list').style.display = 'none';
     }
 
-// --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
+    // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').value = getLocalTodayDateString();
     
     // Dynamiczne generowanie listy miesięcy (od +2 do -6)
@@ -848,7 +857,7 @@
             const year = d.getFullYear();
             const monthIndex = d.getMonth();
             const monthIso = String(monthIndex + 1).padStart(2, '0');
-            const isoString = `${year}-${monthIso}`; // Format dla bazy: YYYY-MM
+            const isoString = `${year}-${monthIso}`; 
             const label = `${plMonths[monthIndex]} ${year}`;
             
             if (i === 0) {
@@ -905,7 +914,7 @@
         document.getElementById('pay-notes').value = '';
         document.querySelectorAll('.pay-cat').forEach(el => el.checked = false);
         
-        toggleMonthSelect(); // <-- Ukrywa pole po dodaniu do koszyka
+        toggleMonthSelect(); 
         renderPaymentQueue();
     }
 
@@ -980,9 +989,8 @@
         }
     }
 
-// --- NOWY MODUŁ: POBIERANIE ZALEGŁOŚCI DO APLIKACJI ---
     window.fetchAndRenderDebts = async function() {
-        toggleDebtsList(true); // <--- DODANA LINIJKA: Automatycznie rozwija listę przed pobraniem
+        toggleDebtsList(true); 
         
         const container = document.getElementById('debts-inline-list');
         container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie danych z bazy... ⏳</div>';
@@ -1793,7 +1801,7 @@
             icon.innerText = '▼';
         }
     }
-    // --- FUNKCJA ZWIJANIA/ROZWIJANIA ZALEGŁOŚCI ---
+
     window.toggleDebtsList = function(forceOpen = false) {
         const list = document.getElementById('debts-inline-list');
         const icon = document.getElementById('debts-toggle-icon');
@@ -1810,6 +1818,84 @@
         } else {
             list.style.display = 'none';
             icon.innerText = '▲';
+        }
+    }
+
+    // --- NOWY MODUŁ: INLINE HISTORIA OBECNOŚCI ---
+    window.toggleAttHistoryList = function(forceOpen = false) {
+        const list = document.getElementById('att-history-inline-list');
+        const icon = document.getElementById('att-history-toggle-icon');
+        
+        if (forceOpen || list.style.display === 'none') {
+            list.style.display = 'block';
+            icon.innerText = '▼';
+        } else {
+            list.style.display = 'none';
+            icon.innerText = '▲';
+        }
+    }
+
+    window.fetchAndRenderInlineAttendance = async function() {
+        toggleAttHistoryList(true); // Otwiera listę automatycznie po kliknięciu
+        const container = document.getElementById('att-history-inline-list');
+        container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie historii z bazy... ⏳</div>';
+        
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getReports");
+            const data = await res.json();
+            const rawList = data.attendance || [];
+            
+            if(rawList.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#ccc">Brak historii treningów w bazie.</div>';
+                return;
+            }
+            
+            // Grupowanie wyników po dacie
+            const daysMap = {};
+            rawList.forEach(item => {
+                if (!daysMap[item.displayDate]) daysMap[item.displayDate] = { totalCount: 0, groups: [] };
+                daysMap[item.displayDate].totalCount += item.licznik;
+                daysMap[item.displayDate].groups.push(item);
+            });
+
+            let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+            let idx = 0;
+            
+            // Renderowanie kafelków dla poszczególnych dni
+            Object.entries(daysMap).forEach(([dateStr, dayData]) => {
+                let detailId = 'inline-att-day-' + idx++;
+                let groupsHtml = dayData.groups.map(g => {
+                    const names = (g.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
+                    return `
+                    <div style="margin-bottom:10px; background:white; padding:8px; border-radius:6px; border-left:3px solid var(--accent); box-shadow:0 1px 2px rgba(0,0,0,0.05)">
+                        <div style="font-weight:bold; color:var(--accent); font-size:13px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px">
+                            ${g.grupa.toUpperCase()} (${g.licznik} os.)
+                        </div>
+                        <div style="font-size:13px; color:#333; line-height:1.5">${names || '<i>Brak nazwisk</i>'}</div>
+                    </div>`;
+                }).join('');
+
+                html += `
+                <div style="background:var(--bg); border-radius:8px; border:1px solid var(--border); overflow:hidden;">
+                    <div onclick="toggleDetails('${detailId}')" style="padding:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#fff;">
+                        <div style="display:flex; align-items:center; gap:8px">
+                            <span style="font-size:18px">📅</span>
+                            <span style="font-weight:bold; font-size:14px">${dateStr}</span>
+                        </div>
+                        <div style="font-size:12px; color:#666">
+                            <b>${dayData.totalCount} os.</b> ▼
+                        </div>
+                    </div>
+                    <div id="${detailId}" style="display:none; padding:10px; background:#f2f2f7; border-top:1px solid #eee;">
+                        ${groupsHtml}
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            
+        } catch(e) {
+            container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
         }
     }
 </script>
