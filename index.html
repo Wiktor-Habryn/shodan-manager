@@ -2011,22 +2011,27 @@
             return;
         }
         
-        // Tablica do zamiany numerów na polskie nazwy
         const plMonths = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
-
         const monthsMap = {};
-        rawList.forEach(item => {
-            // Próbujemy stworzyć czytelną nazwę (np. "Marzec 2026")
-            let label = "";
-            let sortKey = item.dateKey || ""; // dateKey zwykle ma format YYYY-MM
 
-            if (sortKey && sortKey.includes("-")) {
-                const parts = sortKey.split("-");
-                const year = parts[0];
-                const monthIdx = parseInt(parts[1], 10) - 1;
+        rawList.forEach(item => {
+            // Próbujemy stworzyć obiekt daty z tego, co mamy w dateKey lub displayDate
+            const dateInput = item.dateKey || item.displayDate;
+            const d = new Date(dateInput);
+            
+            let label = "";
+            let sortKey = "";
+
+            if (!isNaN(d.getTime())) {
+                // Jeśli JavaScript rozpoznał datę (nawet ten długi format ze zdjęcia)
+                const monthIdx = d.getMonth();
+                const year = d.getFullYear();
                 label = plMonths[monthIdx] + " " + year;
+                sortKey = year + "-" + String(monthIdx + 1).padStart(2, '0');
             } else {
-                label = sortKey || "Inne";
+                // Jeśli to jakiś dziwny tekst, którego nie da się sparsować
+                label = dateInput || "Inne";
+                sortKey = "0000-00";
             }
 
             if (!monthsMap[sortKey]) monthsMap[sortKey] = { label: label, totalSum: 0, payments: [] };
@@ -2037,23 +2042,21 @@
         let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
         let idx = 0;
         
-        // Sortowanie kluczy (miesięcy) od najnowszego
+        // Sortowanie kluczy od najnowszego
         const sortedKeys = Object.keys(monthsMap).sort().reverse();
         
         sortedKeys.forEach(key => {
             let monthData = monthsMap[key];
             let detailId = 'inline-pay-month-' + idx++;
             
-            let paymentsHtml = monthData.payments.map(p => {
-                return `
+            let paymentsHtml = monthData.payments.map(p => `
                 <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:5px;">
                     <div>
                         <div style="font-weight:bold; font-size:14px; color:var(--text);">${p.imie}</div>
                         <div style="font-size:11px; color:#666;">${p.displayDate} | ${p.kat} ${p.uwagi ? `(<i>${p.uwagi}</i>)` : ''}</div>
                     </div>
                     <div style="font-weight:bold; color:var(--green);">${parseFloat(p.kwota).toFixed(2)} zł</div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
 
             html += `
             <div style="background:var(--bg); border-radius:8px; border:1px solid var(--border); overflow:hidden;">
