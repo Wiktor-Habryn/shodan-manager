@@ -83,12 +83,10 @@
     
     .filters-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
 
-    /* Style dla medali */
     .medal-btn { width:30px; height:30px; border-radius:50%; border:2px solid #ccc; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
     .medal-btn.active { border-color: transparent; color: white; }
     
     @media (min-width: 768px) {
-        /* 1. Pozwalamy aplikacji rozszerzyć się na monitorze */
         .app-container {
             max-width: 1200px;
             border-left: 1px solid var(--border);
@@ -96,7 +94,6 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        /* 2. Przekształcamy długie listy w siatkę kafelków (Grid) */
         #members-list, 
         #att-list, 
         #tournaments-list, 
@@ -107,14 +104,12 @@
             gap: 15px;
         }
 
-        /* 3. Usuwamy domyślne marginesy z kafelków */
         #members-list .card, 
         #tournaments-list .card, 
         #exam-sessions-list .card {
             margin-bottom: 0; 
         }
 
-        /* 4. Kosmetyka paska nawigacji pod użycie myszką */
         .nav-bar {
             padding: 15px 0;
             padding-bottom: 15px;
@@ -152,12 +147,12 @@
         SHODAN MANAGER
         <div style="display:flex; gap:10px; align-items:center">
             <span onclick="appLogout()" style="font-size:20px; cursor:pointer;" title="Wyloguj">🔒</span>
-            
             <div id="conn-status" class="status-dot"></div>
             <span onclick="toggleTheme()" style="font-size:22px; cursor:pointer;">🌓</span>
         </div>
     </div>
 
+    <!-- WIDOK: KLUB -->
     <div class="content" id="view-klub">
         <div class="card" style="display:flex; gap:10px">
             <input id="search-member" placeholder="🔍 Szukaj ucznia..." onkeyup="renderMembers()">
@@ -185,8 +180,7 @@
                 </div>
                 
                 <label style="font-size:10px;color:#888; margin-top:5px; display:block">Grupa</label>
-                <select id="new-group">
-                </select>
+                <select id="new-group"></select>
                 
                 <button class="btn btn-green" style="margin-top:15px" onclick="addNewMember()">💾 ZAPISZ DO BAZY</button>
             </div>
@@ -196,6 +190,7 @@
         <div id="members-list"></div>
     </div>
 
+    <!-- WIDOK: OBECNOŚĆ -->
     <div class="content" id="view-obecnosc" style="display:none">
         <div class="card">
             <h3>✅ Obecność</h3>
@@ -205,23 +200,25 @@
 
         <div id="att-list" class="card" style="display:none"></div>
         <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 40;" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
-        
+
+        <!-- NAPRAWA BŁĘDU: Dodana karta historii obecności (była w JS, brakowało w HTML) -->
         <div class="card" style="border-left:4px solid var(--accent); margin-top:15px; padding-bottom: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleAttHistoryList()">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <h3 style="margin:0; color:var(--text)">📜 Historia Treningów</h3>
+                    <h3 style="margin:0; color:var(--text)">📋 Historia Treningów</h3>
                     <span id="att-history-toggle-icon" style="color:var(--text); font-size:14px; font-weight:bold;">▼</span>
                 </div>
                 <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--accent); color:var(--accent)" onclick="event.stopPropagation(); fetchAndRenderInlineAttendance()">Odśwież 🔄</button>
             </div>
-            
             <div id="att-history-inline-list" style="display:none; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
                 <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
             </div>
         </div>
     </div>
 
+    <!-- WIDOK: PŁATNOŚCI — NAPRAWA BŁĘDU: przywrócono poprawną strukturę div.content -->
     <div class="content" id="view-platnosci" style="display:none">
+
         <div class="card">
             <h3>💰 Przyjmij Wpłatę</h3>
             <label style="font-size:12px; color:#888">Kto płaci?</label>
@@ -267,11 +264,22 @@
             <div id="pay-queue-container" style="display:none; margin-top:20px; border-top:2px dashed #ccc; padding-top:10px">
                 <label style="font-size:12px; color:#888; font-weight:bold">LISTA DO WYSŁANIA:</label>
                 <div id="pay-queue-list"></div>
-                
                 <button id="btn-send-all" class="btn btn-green" onclick="submitAllPayments()">✅ WYŚLIJ WSZYSTKO (0 zł)</button>
             </div>
+        </div>
 
-            <button class="btn btn-outline" style="margin-top:15px; font-size:15px; border:none; color:#666; background-color: #F5F5F5;" onclick="showFinanceReport()">📜 Lista Płatności (Archiwum)</button>
+        <div class="card" style="border-left:4px solid var(--green); margin-top:15px; padding-bottom: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePayHistoryList()">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:0; color:var(--text)">📜 Historia Wpłat</h3>
+                    <span id="pay-history-toggle-icon" style="color:var(--text); font-size:14px; font-weight:bold;">▼</span>
+                </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--green); color:var(--green)" onclick="event.stopPropagation(); fetchAndRenderInlinePayments()">Odśwież 🔄</button>
+            </div>
+            
+            <div id="pay-history-inline-list" style="display:none; margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
+                <div style="text-align:center; color:#888; font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
+            </div>
         </div>
 
         <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 10px;">
@@ -289,7 +297,8 @@
         </div>
 
     </div>
-
+    
+    <!-- WIDOK: TURNIEJE -->
     <div class="content" id="view-turnieje" style="display:none">
         <div class="card">
             <h3>🏆 Turnieje</h3>
@@ -304,6 +313,7 @@
         <div id="tournaments-list"></div>
     </div>
 
+    <!-- WIDOK: EGZAMINY -->
     <div class="content" id="view-egzaminy" style="display:none">
         <div class="card">
             <h3>🥋 Sesje Egzaminacyjne</h3>
@@ -326,6 +336,7 @@
     </div>
 </div>
 
+<!-- MODAL: PROFIL -->
 <div id="modal-profile" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center">
@@ -361,6 +372,7 @@
     </div>
 </div>
 
+<!-- MODAL: LISTA EGZAMINACYJNA -->
 <div id="modal-exam-list" class="modal-overlay">
     <div class="modal-content" style="height:90vh">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
@@ -385,6 +397,7 @@
     </div>
 </div>
 
+<!-- MODAL: SZCZEGÓŁY TURNIEJU -->
 <div id="modal-tournament-details" class="modal-overlay">
     <div class="modal-content" style="height:95vh; display:flex; flex-direction:column">
         
@@ -449,7 +462,8 @@
         <button class="btn btn-green" style="flex-shrink:0; margin-bottom:10px" onclick="exportTournamentToExcel()">📤 EKSPORTUJ DO "APP_ZAWODY"</button>
     </div>
 </div>
-    
+
+<!-- MODAL: EDYCJA KLUBOWICZA -->
 <div id="modal-edit-member" class="modal-overlay">
     <div class="modal-content">
         <h3>Edycja Klubowicza</h3>
@@ -471,6 +485,8 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL: RAPORTY -->
 <div id="modal-reports" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
     <div class="modal-content" style="max-height:85vh; display:flex; flex-direction:column">
         
@@ -536,6 +552,12 @@
         ).join('');
     }
 
+    // NAPRAWA: helper do escapowania apostrofów i cudzysłowów w atrybutach onclick
+    function escapeAttr(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     // --- ZMIENNE GLOBALNE ---
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -543,6 +565,7 @@
     
     let members = JSON.parse(localStorage.getItem('sh_members')) || [];
     let currentExamSessionId = null;
+    let currentExamListener = null; // NAPRAWA: przechowujemy referencję listenera egzaminów
     let currentProfileName = "";
     let currentTourId = null;
     let currentTourName = "";
@@ -578,7 +601,6 @@
                 if(msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
                     msg = "Błędny email lub hasło";
                 }
-                
                 errDiv.innerText = msg;
                 errDiv.style.display = 'block';
             });
@@ -656,13 +678,13 @@
         const groups = ["WSZYSCY", ...new Set(mappedGroups)];
         
         const clubHtml = groups.map(g => 
-            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${g}')">${g}</span>`
+            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${escapeAttr(g)}')">${g}</span>`
         ).join('');
         document.getElementById('club-group-filters').innerHTML = clubHtml;
 
         const attGroups = groups.filter(g => g !== "WSZYSCY" && g !== "BRAK GRUPY");
         const attHtml = attGroups.map(g => 
-            `<span class="chip" onclick="filterAtt('${g}', this)">${g}</span>`
+            `<span class="chip" onclick="filterAtt('${escapeAttr(g)}', this)">${g}</span>`
         ).join('');
         document.getElementById('att-group-filters').innerHTML = attHtml;
         
@@ -692,8 +714,9 @@
             }
         }
 
+        // NAPRAWA: escapowanie imienia w onclick, by apostrofy nie psuły HTML
         const html = list.filter(m => m.imie.toLowerCase().includes(term)).map(m => `
-            <div class="card" onclick="openProfile('${m.imie}')">
+            <div class="card" onclick="openProfile('${escapeAttr(m.imie)}')">
                 <div style="font-weight:bold">${m.imie}</div>
                 <div style="font-size:12px; color:#666">
                     ${m.stopien} | ${(!m.grupa || m.grupa.trim() === "") ? '<span style="color:var(--red)">BRAK GRUPY</span>' : m.grupa}
@@ -706,7 +729,7 @@
     renderGroupFilters();
     renderMembers();
 
-   window.addNewMember = async function() {
+    window.addNewMember = async function() {
         const imie = document.getElementById('new-name').value;
         const rawDate = document.getElementById('new-date').value;
         const stopien = document.getElementById('new-rank').value || "Biały pas";
@@ -787,7 +810,7 @@
         document.getElementById('att-send-btn').style.display = 'block';
         
         document.getElementById('att-list').innerHTML = list.map((m, index) => `
-            <div class="list-item" onclick="toggleAttItem('${m.imie}')" style="cursor:pointer; padding: 12px 10px;">
+            <div class="list-item" onclick="toggleAttItem('${escapeAttr(m.imie)}')" style="cursor:pointer; padding: 12px 10px;">
                 <div style="display:flex; align-items:center; gap:12px">
                     <span style="
                         background: var(--accent); 
@@ -844,7 +867,6 @@
     // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').value = getLocalTodayDateString();
     
-    // Dynamiczne generowanie listy miesięcy (od +2 do -6)
     ;(function populateMonthSelect() {
         const select = document.getElementById('pay-for-month');
         if (!select) return;
@@ -880,7 +902,7 @@
         const box = document.getElementById('pay-suggestions');
         if(val.length < 2) { box.style.display='none'; return; }
         const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
-        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPayMember('${m.imie}')">${m.imie}</div>`).join('');
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPayMember('${escapeAttr(m.imie)}')">${m.imie}</div>`).join('');
         box.style.display = 'block';
     }
 
@@ -990,7 +1012,7 @@
     }
 
     window.fetchAndRenderDebts = async function() {
-        toggleDebtsList(true); // Automatycznie rozwija główną listę przed pobraniem
+        toggleDebtsList(true);
         
         const container = document.getElementById('debts-inline-list');
         container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie danych z bazy... ⏳</div>';
@@ -1011,7 +1033,6 @@
                 const detailId = 'debt-month-' + idx;
                 
                 if (hasDebts) {
-                    // WARIANT 1: Są zaległości (Lekki czerwony, rozwijany)
                     let debtorsHtml = month.debtors.map((d, i) => `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
                             <div>
@@ -1038,7 +1059,6 @@
                         </div>
                     </div>`;
                 } else {
-                    // WARIANT 2: Brak zaległości (Lekki zielony, brak rozwijania)
                     html += `
                     <div style="background:#e6f4ea; border-radius:8px; border:1px solid #a8dab5; padding:12px; display:flex; justify-content:space-between; align-items:center;">
                         <div style="font-weight:bold; font-size:14px; color:#2e7d32;">${month.monthLabel}</div>
@@ -1062,7 +1082,7 @@
         onValue(ref(db, 'tournaments'), (snap) => {
             const data = snap.val() || {};
             const listHtml = Object.entries(data).reverse().map(([id, t]) => `
-                <div class="card" onclick="openTournamentDetails('${id}', '${t.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                <div class="card" onclick="openTournamentDetails('${id}', '${escapeAttr(t.name)}')" style="display:flex; justify-content:space-between; align-items:center">
                     <div>
                         <div style="font-weight:bold">${t.name}</div>
                         <div style="font-size:11px; color:#666">Kliknij, aby zarządzać</div>
@@ -1080,7 +1100,7 @@
         onValue(ref(db, 'exams'), (snap) => {
             const data = snap.val() || {};
             document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
-                <div class="card" onclick="openExamSession('${id}', '${s.name}')" style="display:flex; justify-content:space-between; align-items:center">
+                <div class="card" onclick="openExamSession('${id}', '${escapeAttr(s.name)}')" style="display:flex; justify-content:space-between; align-items:center">
                     <div>
                         <div style="font-weight:bold">${s.name}</div>
                         <div style="font-size:12px; color:#666">Kliknij, aby otworzyć</div>
@@ -1178,6 +1198,7 @@
             activeTournamentListener = null;
         }
     }
+
     window.editCompetitor = function(cid) {
         toggleCompForm(true);
 
@@ -1186,7 +1207,6 @@
 
         document.getElementById('t-comp-id').value = cid;
         document.getElementById('t-comp-name').value = c.name || "";
-        
         document.getElementById('t-comp-year').value = (c.year !== undefined && c.year !== null) ? c.year : "";
         document.getElementById('t-comp-weight').value = (c.weight !== undefined && c.weight !== null) ? c.weight : "";
 
@@ -1220,9 +1240,7 @@
 
         if(!name) return alert("Musisz podać co najmniej Imię i Nazwisko!");
 
-        const data = { 
-            name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum 
-        };
+        const data = { name, year, weight, kataMat, kataNum, kumiteMat, kumiteNum };
 
         showLoader(true);
 
@@ -1353,7 +1371,7 @@
         if(matches.length === 0) { box.style.display='none'; return; }
 
         box.innerHTML = matches.map(m => `
-            <div class="suggestion-item" onclick="selectTourMember('${m.imie}', '${m.ur}')">
+            <div class="suggestion-item" onclick="selectTourMember('${escapeAttr(m.imie)}', '${escapeAttr(m.ur || '')}')">
                 <div style="font-weight:bold">${m.imie}</div>
                 <div style="font-size:11px; color:#666">Ur: ${m.ur || 'brak'} | ${m.stopien}</div>
             </div>
@@ -1361,14 +1379,29 @@
         box.style.display = 'block';
     }
 
+    // NAPRAWA: poprawiona logika parsowania daty PL (DD-MMM-YYYY)
     window.selectTourMember = function(name, urDate) {
         document.getElementById('t-comp-name').value = name;
-        if(urDate && urDate.includes('-')) {
-            const parts = urDate.split('-'); 
-            if(parts.length === 3) document.getElementById('t-comp-year').value = parts[2]; 
-        } else if (urDate && urDate.length === 4) {
-            document.getElementById('t-comp-year').value = urDate;
+        
+        let rok = "";
+        if (urDate) {
+            // Format PL: DD-MMM-YYYY np. "15-STY-2010"
+            const parts = urDate.split('-');
+            if (parts.length === 3) {
+                // Sprawdzamy czy ostatni segment to rok (4 cyfry)
+                if (/^\d{4}$/.test(parts[2])) {
+                    rok = parts[2];
+                }
+                // Lub pierwszy segment to rok (format ISO YYYY-MM-DD)
+                else if (/^\d{4}$/.test(parts[0])) {
+                    rok = parts[0];
+                }
+            } else if (urDate.length === 4 && /^\d{4}$/.test(urDate)) {
+                rok = urDate;
+            }
         }
+        
+        if (rok) document.getElementById('t-comp-year').value = rok;
         document.getElementById('tour-suggestions').style.display = 'none';
     }
 
@@ -1421,11 +1454,20 @@
     }
 
     window.openExamSession = function(id, name) {
+        // NAPRAWA: odłącz poprzedni listener przed podpięciem nowego (zapobiega wyciekom pamięci)
+        if (currentExamListener) {
+            off(currentExamListener);
+            currentExamListener = null;
+        }
+
         currentExamSessionId = id;
         document.getElementById('exam-title').innerText = name;
         document.getElementById('modal-exam-list').style.display = 'flex';
         
-        onValue(ref(db, `exams/${id}/candidates`), (snap) => {
+        const examRef = ref(db, `exams/${id}/candidates`);
+        currentExamListener = examRef;
+        
+        onValue(examRef, (snap) => {
             const list = snap.val() || {};
             currentExamData = list; 
 
@@ -1442,14 +1484,21 @@
                                 : `<b>${c.targetRank}</b>`
                             }
                         </div>
-                        ${c.status !== 'PASS' ? `<button class="btn btn-green" style="width:auto; padding:5px 15px; margin:0" onclick="passCandidate('${cid}', '${c.imie}')">ZDAŁ</button>` : '✅'}
+                        ${c.status !== 'PASS' ? `<button class="btn btn-green" style="width:auto; padding:5px 15px; margin:0" onclick="passCandidate('${cid}', '${escapeAttr(c.imie)}')">ZDAŁ</button>` : '✅'}
                     </div>
                 </div>
             `).join('');
         });
     }
     
-    window.closeExamModal = function() { document.getElementById('modal-exam-list').style.display = 'none'; }
+    // NAPRAWA: dodano off() przy zamknięciu modala egzaminów
+    window.closeExamModal = function() {
+        document.getElementById('modal-exam-list').style.display = 'none';
+        if (currentExamListener) {
+            off(currentExamListener);
+            currentExamListener = null;
+        }
+    }
 
     window.updateCandidateRank = function(examId, cid, newRank) {
         update(ref(db, `exams/${examId}/candidates/${cid}`), { targetRank: newRank });
@@ -1488,9 +1537,10 @@
         const box = document.getElementById('exam-suggestions');
         if(val.length < 2) { box.style.display='none'; return; }
         const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
-        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectExamMember('${m.imie}')">${m.imie}</div>`).join('');
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectExamMember('${escapeAttr(m.imie)}')">${m.imie}</div>`).join('');
         box.style.display = 'block';
     }
+
     window.selectExamMember = function(name) {
         document.getElementById('exam-add-name').value = name;
         document.getElementById('exam-suggestions').style.display = 'none';
@@ -1504,9 +1554,17 @@
         document.getElementById('exam-add-name').value = '';
     }
 
+    // NAPRAWA: dodano null-check dla rankSelect
     window.passCandidate = function(cid, imie) {
         const rankSelect = document.getElementById(`rank-${cid}`);
-        const finalRank = rankSelect ? rankSelect.value : "???";
+        
+        // Jeśli selecta nie ma (kandydat już zdał), wychodzimy bezpiecznie
+        if (!rankSelect) {
+            alert("Ten kandydat już zdał egzamin.");
+            return;
+        }
+        
+        const finalRank = rankSelect.value;
 
         if(!confirm(`Czy ${imie} na pewno zdał na ${finalRank}?`)) return;
         
@@ -1803,16 +1861,16 @@
         
         if (forceOpen) {
             body.style.display = 'block';
-            icon.innerText = '▼';
+            icon.innerText = '▲';
             return;
         }
 
         if (body.style.display === 'none') {
             body.style.display = 'block';
-            icon.innerText = '▼';
+            icon.innerText = '▲';
         } else {
             body.style.display = 'none';
-            icon.innerText = '▲'; 
+            icon.innerText = '▼'; 
         }
     }
 
@@ -1848,22 +1906,22 @@
         }
     }
 
-    // --- NOWY MODUŁ: INLINE HISTORIA OBECNOŚCI ---
+    // --- HISTORIA OBECNOŚCI (inline) ---
     window.toggleAttHistoryList = function(forceOpen = false) {
         const list = document.getElementById('att-history-inline-list');
         const icon = document.getElementById('att-history-toggle-icon');
         
         if (forceOpen || list.style.display === 'none') {
             list.style.display = 'block';
-            icon.innerText = '▼';
+            if(icon) icon.innerText = '▲';
         } else {
             list.style.display = 'none';
-            icon.innerText = '▲';
+            if(icon) icon.innerText = '▼';
         }
     }
 
     window.fetchAndRenderInlineAttendance = async function() {
-        toggleAttHistoryList(true); // Otwiera listę automatycznie po kliknięciu
+        toggleAttHistoryList(true);
         const container = document.getElementById('att-history-inline-list');
         container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie historii z bazy... ⏳</div>';
         
@@ -1877,7 +1935,6 @@
                 return;
             }
             
-            // Grupowanie wyników po dacie
             const daysMap = {};
             rawList.forEach(item => {
                 if (!daysMap[item.displayDate]) daysMap[item.displayDate] = { totalCount: 0, groups: [] };
@@ -1888,7 +1945,6 @@
             let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
             let idx = 0;
             
-            // Renderowanie kafelków dla poszczególnych dni
             Object.entries(daysMap).forEach(([dateStr, dayData]) => {
                 let detailId = 'inline-att-day-' + idx++;
                 let groupsHtml = dayData.groups.map(g => {
@@ -1925,6 +1981,89 @@
             container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
         }
     }
+
+    // --- HISTORIA WPŁAT (inline) ---
+    window.togglePayHistoryList = function(forceOpen = false) {
+        const list = document.getElementById('pay-history-inline-list');
+        const icon = document.getElementById('pay-history-toggle-icon');
+        
+        if (forceOpen || list.style.display === 'none') {
+            list.style.display = 'block';
+            if(icon) icon.innerText = '▲';
+        } else {
+            list.style.display = 'none';
+            if(icon) icon.innerText = '▼';
+        }
+    }
+
+    window.fetchAndRenderInlinePayments = async function() {
+        togglePayHistoryList(true);
+        const container = document.getElementById('pay-history-inline-list');
+        container.innerHTML = '<div style="text-align:center; color:#888; font-size:12px; padding:10px;">Pobieranie historii z bazy... ⏳</div>';
+        
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getReports");
+            const data = await res.json();
+            const rawList = data.payments || [];
+            
+            if(rawList.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#ccc">Brak historii wpłat w bazie.</div>';
+                return;
+            }
+            
+            const monthsMap = {};
+            rawList.forEach(item => {
+                const month = item.dateKey || item.displayDate;
+                if (!monthsMap[month]) monthsMap[month] = { totalSum: 0, payments: [] };
+                monthsMap[month].totalSum += parseFloat(item.kwota || 0);
+                monthsMap[month].payments.push(item);
+            });
+
+            let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+            let idx = 0;
+            
+            const sortedMonths = Object.keys(monthsMap).sort().reverse();
+            
+            sortedMonths.forEach(monthStr => {
+                let monthData = monthsMap[monthStr];
+                let detailId = 'inline-pay-month-' + idx++;
+                
+                let paymentsHtml = monthData.payments.map(p => {
+                    return `
+                    <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <div>
+                            <div style="font-weight:bold; font-size:14px; color:var(--text);">${p.imie}</div>
+                            <div style="font-size:11px; color:#666;">${p.displayDate} | ${p.kat} ${p.uwagi ? `(<i>${p.uwagi}</i>)` : ''}</div>
+                        </div>
+                        <div style="font-weight:bold; color:var(--green);">${p.kwota} zł</div>
+                    </div>`;
+                }).join('');
+
+                html += `
+                <div style="background:var(--bg); border-radius:8px; border:1px solid var(--border); overflow:hidden;">
+                    <div onclick="toggleDetails('${detailId}')" style="padding:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#e6f4ea;">
+                        <div style="display:flex; align-items:center; gap:8px">
+                            <span style="font-size:18px">📅</span>
+                            <span style="font-weight:bold; font-size:14px; color:var(--green);">${monthStr}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--green); text-align:right;">
+                            <span style="display:block; font-weight:bold; font-size:14px;">Σ ${monthData.totalSum.toFixed(2)} zł</span>
+                            <span style="color:#2e7d32; font-size:11px;">Wpłat: ${monthData.payments.length} ▼</span>
+                        </div>
+                    </div>
+                    <div id="${detailId}" style="display:none; padding:10px; background:#fff; border-top:1px solid #a8dab5;">
+                        ${paymentsHtml}
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            
+        } catch(e) {
+            container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
+        }
+    }
+    
 </script>
 </body>
 </html>
