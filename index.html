@@ -152,8 +152,7 @@
         </div>
     </div>
 
-    <!-- WIDOK: KLUB -->
-    <div class="content" id="view-klub">
+<div class="content" id="view-klub">
         <div class="card" style="display:flex; gap:10px">
             <input id="search-member" placeholder="🔍 Szukaj ucznia..." onkeyup="renderMembers()">
             <button class="btn btn-outline" style="width:auto; margin:0;" onclick="syncMembers()">🔄</button>
@@ -181,6 +180,18 @@
                 
                 <label style="font-size:10px;color:#888; margin-top:5px; display:block">Grupa</label>
                 <select id="new-group"></select>
+                
+                <div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px;">
+                    <label style="font-size:10px;color:var(--accent);">KONTAKT</label>
+                    <div class="row">
+                        <select id="new-contact-who" style="flex:1; margin-top: 5px;">
+                            <option>Rodzica</option>
+                            <option>Członka klubu</option>
+                        </select>
+                        <input id="new-phone" type="tel" placeholder="Telefon" style="flex:2;">
+                    </div>
+                    <input id="new-email" type="email" placeholder="Adres E-mail">
+                </div>
                 
                 <button class="btn btn-green" style="margin-top:15px" onclick="addNewMember()">💾 ZAPISZ DO BAZY</button>
             </div>
@@ -336,7 +347,6 @@
     </div>
 </div>
 
-<!-- MODAL: PROFIL -->
 <div id="modal-profile" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center">
@@ -351,6 +361,12 @@
         <div style="color:#666; margin:5px 0 15px 0; font-size:14px">
             <span id="prof-rank" style="font-weight:bold; color:black"></span><br>
             Ur. <span id="prof-year"></span>
+            
+            <div style="margin-top: 10px; padding: 10px; background: #e6f2ff; border-radius: 8px; border-left: 4px solid var(--accent);">
+                <div style="font-size: 11px; font-weight: bold; color: var(--accent); margin-bottom: 5px;">KONTAKT DO: <span id="prof-contact-who" style="color:#333;"></span></div>
+                📞 <a id="prof-phone" style="color:var(--text); font-weight:bold; text-decoration: none;"></a><br>
+                📧 <a id="prof-email" style="color:var(--text); font-weight:bold; text-decoration: none;"></a>
+            </div>
         </div>
         
         <div class="card" style="background:var(--bg); border:1px solid var(--border)">
@@ -463,7 +479,6 @@
     </div>
 </div>
 
-<!-- MODAL: EDYCJA KLUBOWICZA -->
 <div id="modal-edit-member" class="modal-overlay">
     <div class="modal-content">
         <h3>Edycja Klubowicza</h3>
@@ -476,7 +491,20 @@
         <label style="font-size:12px; color:#888">Data Urodzenia</label>
         <input type="date" id="edit-new-dob">
         
-        <label style="font-size:12px; color:#888">Stopień</label>
+        <label style="font-size:12px; color:#888; margin-top:10px;">Kontakt do:</label>
+        <select id="edit-new-contact-who" style="width:100%; margin-bottom:5px;">
+            <option>Rodzica</option>
+            <option>Członka klubu</option>
+            <option value="">Brak</option>
+        </select>
+        
+        <label style="font-size:12px; color:#888; margin-top:5px;">Telefon</label>
+        <input type="tel" id="edit-new-phone">
+        
+        <label style="font-size:12px; color:#888; margin-top:5px;">E-mail</label>
+        <input type="email" id="edit-new-email">
+        
+        <label style="font-size:12px; color:#888; margin-top:10px;">Stopień</label>
         <select id="edit-new-rank" style="width:100%; margin-bottom:15px"></select>
         
         <div class="row">
@@ -729,19 +757,27 @@
     renderGroupFilters();
     renderMembers();
 
-    window.addNewMember = async function() {
+window.addNewMember = async function() {
         const imie = document.getElementById('new-name').value;
         const rawDate = document.getElementById('new-date').value;
         const stopien = document.getElementById('new-rank').value || "Biały pas";
         const grupa = document.getElementById('new-group').value;
+        
+        // NOWE ZMIENNE
+        const kontaktDo = document.getElementById('new-contact-who').value;
+        const telefon = document.getElementById('new-phone').value;
+        const email = document.getElementById('new-email').value;
 
         if(!imie || !rawDate) return alert("Podaj Imię i Datę!");
         const formattedDate = formatDateToPL(rawDate);
 
         showLoader(true);
-        await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({type:'addMember', imie, rok: formattedDate, stopien, grupa})});
+        await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+            type:'addMember', imie, rok: formattedDate, stopien, grupa,
+            kontaktDo: kontaktDo, telefon: telefon, email: email // WYŁANIE DO GAS
+        })});
         
-        members.push({imie, ur: formattedDate, stopien, grupa});
+        members.push({imie, ur: formattedDate, stopien, grupa, kontaktDo, telefon, email});
         localStorage.setItem('sh_members', JSON.stringify(members));
         
         renderMembers();
@@ -749,13 +785,15 @@
         
         document.getElementById('new-name').value = '';
         document.getElementById('new-date').value = '';
+        document.getElementById('new-phone').value = '';
+        document.getElementById('new-email').value = '';
         toggleAddMemberForm(); 
 
         showLoader(false);
     }
 
     // --- 2. PROFIL & EDYCJA ---
-    window.openProfile = async function(name) {
+window.openProfile = async function(name) {
         const member = members.find(m => m.imie === name);
         if(!member) return;
         currentProfileName = name;
@@ -764,6 +802,17 @@
         document.getElementById('prof-rank').innerText = member.stopien;
         document.getElementById('prof-year').innerText = member.ur;
         document.getElementById('prof-group-edit').value = member.grupa || "BRAK";
+        
+        // NOWOŚĆ: WYŚWIETLANIE DANYCH KONTAKTOWYCH
+        document.getElementById('prof-contact-who').innerText = (member.kontaktDo || "Nie określono").toUpperCase();
+        
+        const phoneEl = document.getElementById('prof-phone');
+        phoneEl.innerText = member.telefon || "Brak numeru";
+        phoneEl.href = member.telefon ? `tel:${member.telefon.replace(/\s+/g, '')}` : "#"; // Kliknięcie otwiera dialer
+
+        const emailEl = document.getElementById('prof-email');
+        emailEl.innerText = member.email || "Brak e-maila";
+        emailEl.href = member.email ? `mailto:${member.email}` : "#"; // Kliknięcie otwiera klienta mail
         
         document.getElementById('modal-profile').style.display = 'flex';
         
@@ -1607,7 +1656,7 @@
     const editRankSelect = document.getElementById('edit-new-rank');
     if(editRankSelect) editRankSelect.innerHTML = getRankOptions("Biały pas");
 
-    window.openEditDetails = function() {
+window.openEditDetails = function() {
         const m = members.find(x => x.imie === currentProfileName);
         if(!m) return;
 
@@ -1628,16 +1677,26 @@
              }
         }
         document.getElementById('edit-new-dob').value = isoDate;
+        
+        // WGRYWANIE DANYCH KONTAKTOWYCH DO PÓL EDYCJI
+        document.getElementById('edit-new-contact-who').value = m.kontaktDo || "";
+        document.getElementById('edit-new-phone').value = m.telefon || "";
+        document.getElementById('edit-new-email').value = m.email || "";
 
         document.getElementById('modal-profile').style.display = 'none';
         document.getElementById('modal-edit-member').style.display = 'flex';
     }
 
-    window.saveMemberDetails = async function() {
+window.saveMemberDetails = async function() {
         const origName = document.getElementById('edit-orig-name').value;
         const newName = document.getElementById('edit-new-name').value;
         const rawDob = document.getElementById('edit-new-dob').value;
         const newRank = document.getElementById('edit-new-rank').value;
+        
+        // POBRANIE DANYCH KONTAKTOWYCH Z FORMULARZA EDYCJI
+        const newKontaktDo = document.getElementById('edit-new-contact-who').value;
+        const newPhone = document.getElementById('edit-new-phone').value;
+        const newEmail = document.getElementById('edit-new-email').value;
         
         if(!newName) return alert("Nazwisko nie może być puste!");
 
@@ -1651,7 +1710,10 @@
                 originalName: origName,
                 newName: newName,
                 newDob: prettyDob,
-                newRank: newRank
+                newRank: newRank,
+                newKontaktDo: newKontaktDo, // WYSŁANIE
+                newPhone: newPhone,         // WYSŁANIE
+                newEmail: newEmail          // WYSŁANIE
             })
         });
 
@@ -1660,6 +1722,11 @@
             m.imie = newName;
             if(prettyDob) m.ur = prettyDob;
             m.stopien = newRank;
+            
+            // ZAPIS W LOKALNEJ PAMIĘCI
+            m.kontaktDo = newKontaktDo;
+            m.telefon = newPhone;
+            m.email = newEmail;
         }
         localStorage.setItem('sh_members', JSON.stringify(members));
 
