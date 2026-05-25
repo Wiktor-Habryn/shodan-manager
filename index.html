@@ -363,9 +363,19 @@
             Ur. <span id="prof-year"></span>
             
             <div style="margin-top: 10px; padding: 10px; background: #e6f2ff; border-radius: 8px; border-left: 4px solid var(--accent);">
-                <div style="font-size: 11px; font-weight: bold; color: var(--accent); margin-bottom: 5px;">KONTAKT DO: <span id="prof-contact-who" style="color:#333;"></span></div>
-                📞 <a id="prof-phone" style="color:var(--text); font-weight:bold; text-decoration: none;"></a><br>
-                📧 <a id="prof-email" style="color:var(--text); font-weight:bold; text-decoration: none;"></a>
+                <div style="font-size: 11px; font-weight: bold; color: var(--accent); margin-bottom: 5px;">
+                    KONTAKT DO: <span id="prof-contact-who" style="color:#333;"></span>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <a id="prof-phone" style="color:var(--text); font-weight:bold; text-decoration:none;"></a>
+                    <span onclick="copyToClipboard('prof-phone', this)" style="cursor:pointer; color:var(--accent); font-size:11px; font-weight:bold; background:#d1e7ff; padding:2px 6px; border-radius:4px;">📋 Kopiuj</span>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <a id="prof-email" style="color:var(--text); font-weight:bold; text-decoration:none;"></a>
+                    <span onclick="copyToClipboard('prof-email', this)" style="cursor:pointer; color:var(--accent); font-size:11px; font-weight:bold; background:#d1e7ff; padding:2px 6px; border-radius:4px;">📋 Kopiuj</span>
+                </div>
             </div>
         </div>
         
@@ -2148,6 +2158,24 @@ window.saveMemberDetails = async function() {
     } catch(e) {
         container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
     }
+}
+
+// Funkcja do kopiowania tekstu do schowka
+window.copyToClipboard = function(text, btnElement) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Efekt potwierdzenia na przycisku
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "✅ Skopiowano!";
+        btnElement.style.color = "var(--green)";
+        
+        setTimeout(() => {
+            btnElement.innerText = originalText;
+            btnElement.style.color = "var(--accent)";
+        }, 1500);
+    }).catch(err => {
+        console.error('Błąd kopiowania: ', err);
+        alert("Nie udało się skopiować...");
+    });
 }
     
 </script>
