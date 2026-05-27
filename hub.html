@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="SHODAN Hub - Centrum zgłoszeń i informacji dla klubowiczów Karate Kyokushin">
-    <title>Klub Karate Kyokushin SHODAN</title>
+    <title>SHODAN Hub | Karate Kyokushin</title>
     <style>
         * {
             margin: 0;
@@ -77,11 +77,10 @@
         }
 
         .header-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--text);
             margin-bottom: 2px;
-            line-height: 1.2;
         }
 
         .header-subtitle {
@@ -111,6 +110,7 @@
 
         .content {
             flex: 1;
+            padding: 0;
             display: flex;
             flex-direction: column;
         }
@@ -149,7 +149,6 @@
             max-width: 500px;
             margin-left: auto;
             margin-right: auto;
-            width: 100%;
         }
 
         .card {
@@ -176,6 +175,14 @@
         .card:hover {
             background-color: rgba(0, 122, 255, 0.05);
             border-color: var(--accent);
+        }
+
+        .card,
+        .card:visited,
+        .card:hover,
+        .card:active {
+            color: var(--text);
+            text-decoration: none;
         }
 
         .card-icon {
@@ -205,26 +212,44 @@
 
         .card-warning {
             font-size: 13px;
-            color: var(--red) !important;
+            color: var(--text) !important;
             font-weight: 600;
+            opacity: 1;
+            line-height: 1.4;
             margin-top: 4px;
+        }
+
+        .primary-button {
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .primary-button:active {
+            transform: scale(0.97);
+            opacity: 0.9;
         }
 
         .category-tabs {
             display: flex;
             gap: 8px;
             margin-bottom: 20px;
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: var(--bg);
             padding: 4px;
             border-radius: 10px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-        }
-
-        body.dark .category-tabs {
-            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .category-tab {
@@ -234,10 +259,13 @@
             border: none;
             background-color: transparent;
             color: var(--text);
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
             opacity: 0.6;
         }
 
@@ -245,7 +273,6 @@
             background-color: var(--card);
             opacity: 1;
             border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .category-tab:active {
@@ -256,10 +283,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
         }
 
         .accordion-item {
@@ -314,7 +337,7 @@
             align-items: center;
             justify-content: center;
             color: var(--accent);
-            font-size: 14px;
+            font-size: 16px;
             transition: transform 0.3s ease;
             flex-shrink: 0;
         }
@@ -327,35 +350,31 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
-            background-color: rgba(0, 0, 0, 0.01);
+            background-color: rgba(0, 0, 0, 0.02);
         }
 
         body.dark .accordion-content {
-            background-color: rgba(255, 255, 255, 0.01);
+            background-color: rgba(255, 255, 255, 0.02);
         }
 
         .accordion-body {
-            padding: 12px 16px 16px 16px;
+            padding: 0 16px 16px 16px;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-
-        body.dark .accordion-body {
-            border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .requirement-section {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
 
         .requirement-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            opacity: 0.6;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -364,17 +383,17 @@
             font-size: 13px;
             line-height: 1.5;
             color: var(--text);
-            opacity: 0.85;
+            opacity: 0.8;
         }
 
         .ai-button {
             margin-top: 8px;
-            padding: 12px 14px;
-            background-color: rgba(0, 122, 255, 0.08);
+            padding: 10px 14px;
+            background-color: rgba(0, 122, 255, 0.1);
             border: 1px solid var(--accent);
             border-radius: 8px;
             color: var(--accent);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
@@ -388,7 +407,7 @@
         }
 
         .ai-button:hover {
-            background-color: rgba(0, 122, 255, 0.12);
+            background-color: rgba(0, 122, 255, 0.15);
         }
 
         .nav-bar {
@@ -396,13 +415,14 @@
             border-top: 1px solid var(--border);
             padding: 8px 0;
             display: flex;
+            gap: 0;
             justify-content: space-around;
             align-items: center;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 8px;
+            padding: 12px 16px;
             border: none;
             background-color: transparent;
             color: var(--text);
@@ -415,8 +435,8 @@
             align-items: center;
             gap: 4px;
             text-align: center;
-            opacity: 0.5;
-            transition: all 0.2s ease;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
         }
 
         .nav-tab.active {
@@ -434,14 +454,46 @@
 
         .nav-label {
             font-size: 10px;
-            font-weight: 600;
         }
 
         @media (min-width: 600px) {
-            header { padding: 20px 24px; }
-            .view { padding: 24px; }
-            .header-title { font-size: 28px; }
-            .view-title { font-size: 26px; }
+            header {
+                padding: 20px 24px;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .view {
+                padding: 24px;
+            }
+
+            .header-title {
+                font-size: 32px;
+            }
+
+            .view-title {
+                font-size: 26px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            header {
+                padding: 12px 16px;
+            }
+
+            .header-title {
+                font-size: 22px;
+            }
+
+            .view {
+                padding: 16px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -501,11 +553,17 @@
                 <p class="view-subtitle">Szczegółowe wymagania dla każdego stopnia</p>
 
                 <div class="category-tabs">
-                    <button id="category-tab-seniors" class="category-tab active" onclick="switchCategory('seniors', event)">SENIORZY (+16 lat)</button>
-                    <button id="category-tab-juniors" class="category-tab" onclick="switchCategory('juniors', event)">JUNIORZY (-16 lat)</button>
+                    <button class="category-tab active" onclick="switchCategory('seniors')">SENIORZY (+16 lat)</button>
+                    <button class="category-tab" onclick="switchCategory('juniors')">JUNIORZY (-16 lat)</button>
                 </div>
 
                 <div id="requirements-list" class="accordion-list"></div>
+            </div>
+
+            <div id="view-kata" class="view">
+                <h2 class="view-title">Przebieg Form Kata</h2>
+                <p class="view-subtitle">Szczegółowy opis krok po kroku na każde liczenie</p>
+                <div id="kata-list" class="accordion-list"></div>
             </div>
         </div>
     </div>
@@ -519,6 +577,10 @@
             <span class="nav-icon">📚</span>
             <span class="nav-label">Wymagania</span>
         </button>
+        <button id="nav-tab-kata" class="nav-tab" onclick="switchView('kata', event)">
+            <span class="nav-icon">🥋</span>
+            <span class="nav-label">KATA</span>
+        </button>
     </nav>
 
     <script>
@@ -526,6 +588,7 @@
             {
                 name: '10 Kyu',
                 belt: 'Pas pomarańczowy',
+                color: '#ff9500',
                 id: 's10',
                 data: {
                     'Teoria': 'Właściwy sposób składania i noszenia Karate-Gi, Etykieta Dojo',
@@ -540,6 +603,7 @@
             {
                 name: '9 Kyu',
                 belt: 'Pas pomarańczowy z niebieskim pagonem',
+                color: '#ff9500',
                 id: 's9',
                 data: {
                     'Teoria': 'Masutatsu Oyama – twórca Karate Kyokushin, znaczenie kanku oraz słów Karate, Kyokushinkai i Shinkyokushinkai',
@@ -555,6 +619,7 @@
             {
                 name: '8 Kyu',
                 belt: 'Pas niebieski',
+                color: '#0a84ff',
                 id: 's8',
                 data: {
                     'Teoria': 'Przysięga Dojo, Historia Karate-Do',
@@ -570,6 +635,7 @@
             {
                 name: '7 Kyu',
                 belt: 'Pas niebieski z żółtym pagonem',
+                color: '#0a84ff',
                 id: 's7',
                 data: {
                     'Teoria': 'Historia Karate Kyokushinkai i Shinkyokushinkai',
@@ -585,6 +651,7 @@
             {
                 name: '6 Kyu',
                 belt: 'Pas żółty',
+                color: '#ff9500',
                 id: 's6',
                 data: {
                     'Teoria': 'Liderzy Organizacji Shinkyokushinkai na Świecie i w Polsce',
@@ -593,13 +660,14 @@
                     'Uderzenia': 'Uraken (shomen ganmen uchi, sayu ganmen uchi, hizo uchi, ganmen oroshi uchi, mawashi uchi), Nukite (Nihon, Yonhon)',
                     'Bloki': 'Osai uke, Seiken juji uke (jodan, gedan)',
                     'Kopnięcia': 'Sokuto yoko keage, Gedan i chudan mawashi geri (chusoku, haisoku)',
-                    'Kata': 'Kihon Kata Sono Ni, Pinan sono ni',
+                    'Kata': 'Kihon Kata Sono Ni, Pinan sono ii',
                     'Kumite': '6 walk'
                 }
             },
             {
                 name: '5 Kyu',
                 belt: 'Pas żółty z zielonym pagonem',
+                color: '#34c759',
                 id: 's5',
                 data: {
                     'Teoria': 'Liderzy Organizacji Shinkyokushinkai w Europie, zasady walki sportowej',
@@ -615,6 +683,7 @@
             {
                 name: '4 Kyu',
                 belt: 'Pas zielony',
+                color: '#34c759',
                 id: 's4',
                 data: {
                     'Teoria': 'Wiedza na temat Polskiej, Europejskiej i Światowej Organizacji Shinkyokushinkai',
@@ -630,6 +699,7 @@
             {
                 name: '3 Kyu',
                 belt: 'Pas zielony z brązowym pagonem',
+                color: '#34c759',
                 id: 's3',
                 data: {
                     'Teoria': 'Zasady i przepisy rozgrywania zawodów kumite',
@@ -645,6 +715,7 @@
             {
                 name: '2 Kyu',
                 belt: 'Pas brązowy',
+                color: '#a2845c',
                 id: 's2',
                 data: {
                     'Teoria': 'Zasady i przepisy rozgrywania zawodów kata',
@@ -659,6 +730,7 @@
             {
                 name: '1 Kyu',
                 belt: 'Pas brązowy z czarnym pagonem',
+                color: '#a2845c',
                 id: 's1',
                 data: {
                     'Sprawność': '80 pompek na pięściach, 20 na koken, 80 brzuszków, 120 wejść na ławeczkę (w 2 min.), 15 „scyzoryków", 25 przeskoków nad pasem, 15 przeskoków yoko tobi geri przez pas na wysokości bioder, 12 podciągnięć na drążku',
@@ -675,6 +747,7 @@
             {
                 name: '10.1 Kyu',
                 belt: 'Pas pomarańczowy z jednym czerwonym pagonem',
+                color: '#ff9500',
                 id: 'j10_1',
                 data: {
                     'Teoria': 'Właściwy sposób składania i noszenia Karate-Gi, Etykieta Dojo',
@@ -689,6 +762,7 @@
             {
                 name: '10.2 Kyu',
                 belt: 'Pas pomarańczowy z dwoma czerwonymi pagonami',
+                color: '#ff9500',
                 id: 'j10_2',
                 data: {
                     'Teoria': 'Znaczenie Karate-Do oraz Kyokushinkai, Przysięga Dojo',
@@ -702,10 +776,11 @@
             },
             {
                 name: '9.1 Kyu',
-                belt: 'Pas pomarańczowy z dwoma czerwonymi i jednym niebieskim pagonem',
+                belt: 'Pas pomarańczowy z niebieskim pagonem',
+                color: '#ff9500',
                 id: 'j9_1',
                 data: {
-                    'Teoria': 'Znajmość Kanku oraz słów Karate, Kyokushinkai i Shinkyokushinkai',
+                    'Teoria': 'Znajomość Kanku oraz słów Karate, Kyokushinkai i Shinkyokushinkai',
                     'Sprawność': 'Przewrót w przód, skłon w przód w rozkroku z łokciami do podłogi',
                     'Pozycje': 'Musubi Dachi',
                     'Uderzenia': 'Seiken gyaku tsuki (chudan, jodan, gedan)',
@@ -717,7 +792,8 @@
             },
             {
                 name: '9.2 Kyu',
-                belt: 'Pas pomarańczowy dwoma czerwonymi i dwoma niebieskimi pagonami',
+                belt: 'Pas pomarańczowy z dwoma niebieskimi pagonami',
+                color: '#ff9500',
                 id: 'j9_2',
                 data: {
                     'Teoria': 'Masutatsu Oyama – twórca Karate Kyokushin',
@@ -727,12 +803,13 @@
                     'Bloki': 'Seiken chudan uchi uke',
                     'Kopnięcia': 'Chusoku chudan mae geri',
                     'Kata': 'Taikyoku Sono ichi',
-                    'Kumite': 'Ippon Kumite, Renraku'
+                    'Kumite': 'Ippon Kumite'
                 }
             },
             {
                 name: '8.1 Kyu',
                 belt: 'Pas niebieski z jednym czerwonym pagonem',
+                color: '#0a84ff',
                 id: 'j8_1',
                 data: {
                     'Teoria': 'Przysięga Dojo',
@@ -742,12 +819,13 @@
                     'Bloki': 'Seiken chudan uchi uke gedan barai',
                     'Kopnięcia': 'Chusoku jodan mae geri',
                     'Kata': 'Taikyoku Sono Ni',
-                    'Kumite': 'Ippon Kumite, Renraku'
+                    'Kumite': 'Ippon Kumite'
                 }
             },
             {
                 name: '8.2 Kyu',
                 belt: 'Pas niebieski z dwoma czerwonymi pagonami',
+                color: '#0a84ff',
                 id: 'j8_2',
                 data: {
                     'Teoria': 'Historia Karate-Do',
@@ -757,12 +835,13 @@
                     'Bloki': 'Seiken morote chudan uchi uke',
                     'Kopnięcia': 'Teisoku soto mawashi keage',
                     'Kata': 'Taikyoku Sono San',
-                    'Kumite': 'Sanbon kumite wariant I, Renraku'
+                    'Kumite': 'Sanbon kumite wariant I'
                 }
             },
             {
                 name: '7.1 Kyu',
-                belt: 'Pas niebieski z dwoma czerwonymi i jednym żółtym pagonem',
+                belt: 'Pas niebieski z żółtym pagonem',
+                color: '#0a84ff',
                 id: 'j7_1',
                 data: {
                     'Teoria': 'Historia Karate Kyokushinkai',
@@ -777,7 +856,8 @@
             },
             {
                 name: '7.2 Kyu',
-                belt: 'Pas niebieski z dwoma czerwonymi i dwoma żółtymi pagonami',
+                belt: 'Pas niebieski z dwoma żółtymi pagonami',
+                color: '#0a84ff',
                 id: 'j7_2',
                 data: {
                     'Teoria': 'Historia Shinkyokushinkai',
@@ -792,7 +872,8 @@
             },
             {
                 name: '6.1 Kyu',
-                belt: 'Pas żółty z jednym czerwonym pagonem',
+                belt: 'Pas żółty z czerwonym pagonem',
+                color: '#ff9500',
                 id: 'j6_1',
                 data: {
                     'Teoria': 'Liderzy Organizacji Shinkyokushinkai na Świecie',
@@ -801,13 +882,14 @@
                     'Uderzenia': 'Uraken (shomen ganmen uchi, sayu ganmen uchi, hizo uchi, ganmen oroshi uchi)',
                     'Bloki': 'Osai Uke',
                     'Kopnięcia': 'Sokuto yoko keage, Gedan mawashi geri (chusoku, haisoku)',
-                    'Kata': 'Kihon Kata sono ni',
+                    'Kata': 'Kihon Kata sono ii',
                     'Kumite': '5 walk'
                 }
             },
             {
                 name: '6.2 Kyu',
                 belt: 'Pas żółty z dwoma czerwonymi pagonami',
+                color: '#ff9500',
                 id: 'j6_2',
                 data: {
                     'Teoria': 'Liderzy Organizacji Shinkyokushinkai w Polsce',
@@ -816,13 +898,14 @@
                     'Uderzenia': 'Uraken mawashi uchi, Nihon nukite (Me tsuki), Yonhon nukite (jodan, chudan)',
                     'Bloki': 'Seiken juji uke (jodan, gedan)',
                     'Kopnięcia': 'Mawashi geri chudan (haisoku i chusoku)',
-                    'Kata': 'Pinan Kata Sono Ni',
+                    'Kata': 'Pinan Kata Sono Ii',
                     'Kumite': '6 walk'
                 }
             },
             {
                 name: '5.1 Kyu',
-                belt: 'Pas żółty z dwoma czerwonymi i jednym zielonym pagonem',
+                belt: 'Pas żółty z zielonym pagonem',
+                color: '#34c759',
                 id: 'j5_1',
                 data: {
                     'Teoria': 'Liderzy Organizacji Shinkyokushinkai w Europie',
@@ -837,10 +920,11 @@
             },
             {
                 name: '5.2 Kyu',
-                belt: 'Pas żółty z dwoma czerwonymi i dwoma zielonymi pagonami',
+                belt: 'Pas żółty z dwoma zielonymi pagonami',
+                color: '#34c759',
                 id: 'j5_2',
                 data: {
-                    'Teoria': 'Znajmość ogólnych zasad i przepisów walki sportowej',
+                    'Teoria': 'Znajomość ogólnych zasad i przepisów walki sportowej',
                     'Sprawność': '40 pompek, 20 wyskoków z podciągnięciem kolan, 15 wznosów wyprostowanych nóg, 6 przeskoków nad pasem oburącz',
                     'Pozycje': 'Moro ashi dachi',
                     'Uderzenia': 'Jodan Hiji ate',
@@ -852,7 +936,8 @@
             },
             {
                 name: '4.1 Kyu',
-                belt: 'Pas zielony z jednym czerwonym pagonem',
+                belt: 'Pas zielony z czerwonym pagonem',
+                color: '#34c759',
                 id: 'j4_1',
                 data: {
                     'Teoria': 'Wiedza o Światowej Organizacji Shinkyokushinkai',
@@ -868,21 +953,22 @@
             {
                 name: '4.2 Kyu',
                 belt: 'Pas zielony z dwoma czerwonymi pagonami',
+                color: '#34c759',
                 id: 'j4_2',
                 data: {
                     'Teoria': 'Wiedza o Polskiej i Europejskiej Organizacji Shinkyokushinkai',
                     'Sprawność': '50 pompek na pięściach, 50 brzuszków, 30 wyskoków, 8 „scyzoryków" w zwisie, 10 przeskoków nad pasem, 6 podciągnięć na drążku',
-                    'Pozycje': 'Heisoku dachi',
                     'Uderzenia': 'Shuto hizo uchi, jodan uchi uchi',
                     'Bloki': 'Shuto chudan uchi uke, mae gedan barai, mae mawashi uke',
                     'Kopnięcia': 'Yoko geri jodan sokuto, Ushiro geri jodan',
-                    'Kata': 'Sakugi sono ni',
+                    'Kata': 'Sakugi sono ii',
                     'Kumite': '10 walk'
                 }
             },
             {
                 name: '3.1 Kyu',
-                belt: 'Pas zielony z dwoma czerwonymi i jednym brązowym pagonem',
+                belt: 'Pas zielony z brązowym pagonem',
+                color: '#34c759',
                 id: 'j3_1',
                 data: {
                     'Teoria': 'Zasady i przepisy zawodów kumite',
@@ -896,7 +982,8 @@
             },
             {
                 name: '3.2 Kyu',
-                belt: 'Pas zielony z dwoma czerwonymi i dwoma brązowymi pagonami',
+                belt: 'Pas zielony z dwoma brązowymi pagonami',
+                color: '#34c759',
                 id: 'j3_2',
                 data: {
                     'Sprawność': '60 pompek na pięściach, 60 brzuszków, 60 wejść na ławeczkę (w 1 min.), 10 „scyzoryków" w zwisie, 15 przeskoków nad pasem, 8 podciągnięć',
@@ -911,6 +998,7 @@
             {
                 name: '2.1 Kyu',
                 belt: 'Pas brązowy z czerwonym pagonem',
+                color: '#a2845c',
                 id: 'j2_1',
                 data: {
                     'Teoria': 'Przepisy zawodów kata',
@@ -925,10 +1013,11 @@
             {
                 name: '2.2 Kyu',
                 belt: 'Pas brązowy z dwoma czerwonymi pagonami',
+                color: '#a2845c',
                 id: 'j2_2',
                 data: {
                     'Sprawność': '70 pompek na pięściach i 20 na palcach, 70 brzuszków, 90 wejść na ławeczkę (w 90 sek.), 12 „scyzoryków" w zwisie, 20 przeskoków nad pasem, 10 podciągnięć',
-                    'Uderzenia': 'Haishu (jodan, chudan), Koken uchi (jodan, chudan, gedan).',
+                    'Uderzenia': 'Haishu (jodan, chudan), Koken uchi (jodan, chudan, gedan)',
                     'Bloki': 'Koken uke (chudan, gedan)',
                     'Kopnięcia': 'Mae tobi geri',
                     'Kata': 'Gekisai dai',
@@ -937,7 +1026,8 @@
             },
             {
                 name: '1.1 Kyu',
-                belt: 'Pas brązowy z dwoma czerwonymi i jednym czarnym pagonem',
+                belt: 'Pas brązowy z czarnym pagonem',
+                color: '#a2845c',
                 id: 'j1_1',
                 data: {
                     'Sprawność': '75 pompek na pięściach, 15 na koken, 75 brzuszków, 100 wejść na ławeczkę (w 2 min.), 12 „scyzoryków" w zwisie, 22 przeskoki nad pasem, 10 przeskoków yoko tobi geri przez pas na wysokości bioder, 11 podciągnięć',
@@ -950,7 +1040,8 @@
             },
             {
                 name: '1.2 Kyu',
-                belt: 'Pas brązowy z dwoma czerwonymi i dwoma czarnymi pagonami',
+                belt: 'Pas brązowy z dwoma czarnymi pagonami',
+                color: '#a2845c',
                 id: 'j1_2',
                 data: {
                     'Sprawność': '80 pompek na pięściach, 20 na koken, 80 brzuszków, 120 wejść na ławeczkę (w 2 min.), 15 „scyzoryków" w zwisie, 25 przeskoków nad pasem, 15 przeskoków yoko tobi geri przez pas, 12 podciągnięć',
@@ -978,34 +1069,25 @@
             }
         }
 
-        function switchView(viewName, e) {
+        function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
             
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            
-            if (e && e.currentTarget) {
-                e.currentTarget.classList.add('active');
-            } else {
-                const fallbackTab = document.getElementById('nav-tab-' + viewName);
-                if (fallbackTab) fallbackTab.classList.add('active');
-            }
+            event.target.closest('.nav-tab').classList.add('active');
 
             if (viewName === 'requirements') {
                 renderRequirements();
             }
+            if (viewName === 'kata') {
+                renderKata();
+            }
         }
 
-        function switchCategory(catName, e) {
+        function switchCategory(catName) {
             currentCategory = catName;
             document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-            
-            if (e && e.currentTarget) {
-                e.currentTarget.classList.add('active');
-            } else {
-                const fallbackCat = document.getElementById('category-tab-' + catName);
-                if (fallbackCat) fallbackCat.classList.add('active');
-            }
+            event.target.classList.add('active');
             renderRequirements();
         }
 
@@ -1051,7 +1133,6 @@
             const content = item.querySelector('.accordion-content');
             const isOpen = item.classList.contains('open');
 
-            // Płynne zamykanie pozostałych dla lepszego UX na smartfonach
             document.querySelectorAll('.accordion-item.open').forEach(openItem => {
                 if (openItem !== item) {
                     openItem.classList.remove('open');
@@ -1066,6 +1147,109 @@
                 item.classList.add('open');
                 content.style.maxHeight = content.scrollHeight + 'px';
             }
+        }
+
+        // --- DANE KATA ---
+        const kataData = [
+            {
+                name: "Taikyoku Sono Ichi", id: "k_taikyoku_1",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni": "Fumi-ashi (krok w przód) do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "San": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Roku": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Shichi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Hachi": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Jū": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chudan-zuki.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni (12)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chudan-zuki.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi (14)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Go (15)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Hachi (18)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Nijū": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki." }
+            },
+            {
+                name: "Taikyoku Sono Ni", id: "k_taikyoku_2",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni": "Fumi-ashi (krok w przód) do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "San": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Roku": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Shichi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Hachi": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Jū": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni (12)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi (14)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Go (15)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Hachi (18)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Nijū": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki." }
+            },
+            {
+                name: "Taikyoku Sono San", id: "k_taikyoku_3",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-kōkutsu-dachi z seiken-oi-chudan-uchi-uke.", "Ni": "Fumi-ashi (krok w przód) do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "San": "Mawatte nogą wykroczną w tył do migi-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Shi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Roku": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Shichi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Hachi": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Jū": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Ni (12)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi (14)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Go (15)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-jōdan-zuki z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Hachi (18)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chudan-zuki.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Nijū": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki." }
+            },
+            {
+                name: "Sokugi Taikyoku Sono Ichi", id: "k_sokugi_1",
+                steps: { "Ichi": "Sokutō-hidari-kansetsu-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Ni": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi.", "San": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-kansetsu-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Shi": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-kansetsu-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Roku": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi.", "Shichi": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi.", "Hachi": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-kansetsu-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Jū": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-kansetsu-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Ni (12)": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-kansetsu-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi.", "Go (15)": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi.", "Roku (16)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-kansetsu-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Hachi (18)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-kansetsu-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Nijū": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi." }
+            },
+            {
+                name: "Sokugi Taikyoku Sono Ni", id: "k_sokugi_2",
+                steps: { "Ichi": "Sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Ni": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi.", "San": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Shi": "Chūsoku-gyaku-mae-keage do hidari-zenkutsu-dachi.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Roku": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi.", "Shichi": "Chūsoku-gyaku-mae-keage do hidari-zenkutsu-dachi.", "Hachi": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Jū": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Ni (12)": "Chūsoku-gyaku-mae-keage do hidari-zenkutsu-dachi.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Shi (14)": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi.", "Go (15)": "Chūsoku-gyaku-mae-keage do hidari-zenkutsu-dachi.", "Roku (16)": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Hachi (18)": "Chūsoku-gyaku-mae-keage do migi-zenkutsu-dachi.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Nijū": "Chūsoku-gyaku-mae-keage do hidari-zenkutsu-dachi." }
+            },
+            {
+                name: "Sokugi Taikyoku Sono San", id: "k_sokugi_3",
+                steps: { "Ichi": "Sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Ni": "Sokutō-gyaku-uchi-mawashi-geri do migi-zenkutsu-dachi.", "San": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Shi": "Sokutō-gyaku-uchi-mawashi-geri do hidari-zenkutsu-dachi.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Roku": "Teisoku-gyaku-soto-mawashi-geri do migi-zenkutsu-dachi.", "Shichi": "Teisoku-gyaku-soto-mawashi-geri do hidari-zenkutsu-dachi.", "Hachi": "Teisoku-gyaku-soto-mawashi-geri do migi-zenkutsu-dachi z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Jū": "Sokutō-gyaku-uchi-mawashi-geri do migi-zenkutsu-dachi.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Ni (12)": "Sokutō-gyaku-uchi-mawashi-geri do hidari-zenkutsu-dachi.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Shi (14)": "Teisoku-gyaku-soto-mawashi-geri do migi-zenkutsu-dachi.", "Go (15)": "Teisoku-gyaku-soto-mawashi-geri do hidari-zenkutsu-dachi.", "Roku (16)": "Teisoku-gyaku-soto-mawashi-geri do migi-zenkutsu-dachi z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-tsuruashi-dachi, sokutō-hidari-jōdan-geri i mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-kakewake-uke.", "Hachi (18)": "Sokutō-gyaku-uchi-mawashi-geri do migi-zenkutsu-dachi.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-tsuruashi-dachi, sokutō-migi-jōdan-geri i mawatte w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke.", "Nijū": "Sokutō-gyaku-uchi-mawashi-geri do hidari-zenkutsu-dachi." }
+            },
+            {
+                name: "Pinan Sono Ichi", id: "k_pinan_1",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni": "Fumi-ashi (krok w przód) do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "San": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai i ściągnięcie nogi wykrocznej do migi-nekoashi-dachi z tettsui-oi-komekami-uchi.", "Shi": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Go": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Roku": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-jōdan-uke.", "Shichi": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-jōdan-uke.", "Hachi": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-jōdan-uke z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Jū": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Ichi (11)": "Mawatte nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Ni (12)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "San (13)": "Mawatte nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi (14)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Go (15)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki z kiai.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-kōkutsu-dachi z shutō-hidari-mawashi-uke.", "Hachi (18)": "Fumi-ashi (po prawej przekątnej) do migi-kōkutsu-dachi z shutō-migi-mawashi-uke.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-kōkutsu-dachi z shutō-migi-mawashi-uke.", "Nijū": "Fumi-ashi (po lewej przekątnej) do hidari-kōkutsu-dachi z shutō-migi-mawashi-uke." }
+            },
+            {
+                name: "Pinan Sono Ni", id: "k_pinan_2",
+                steps: { "Ichi": "Migi-ryoken-goshi-gamae i mawatte w lewą stronę do hidari-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke-seiken-gyaku-jōdan-uke (pięść z boku głowy).", "Ni": "Zasłona pięścią na wysokości ucha i tettsui-gyaku-komekami-uchi i przejście nogą wykroczną do hidari-kiba-dachi z kensei i seiken-hidari-jun-zuki (na wysokość barku).", "San": "Hidari-ryoken-goshi-gamae i mawatte nogą zakroczną w tył do migi-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke-sieken-gyaku-jōdan-uke (pięść z boku głowy).", "Shi": "Zasłona pięścią na wysokości ucha i tettsui-gyaku-komekami-uchi i przejście nogą wykroczną poprzez migi-enoji-dachi do migi-kiba-dachi z kensei i seiken-migi-jun-zuki (na wysokość barku).", "Go": "Mawatte w prawą stronę poprzez ściągnięcie nogi wykrocznej migi-tsuruashi-dachi z hidari-ryoken-goshi-gamae i sokutō-migi-jōdan-yoko-geri-uraken-migi-jōdan-uchi-uchi, powrót do pozycji i z musubi-dachi wyjście w lewą stronę do hidari-kōkutsu-dachi z shutō-hidari-mawashi-uke.", "Roku": "Fumi-ashi do migi-kōkutsu-dachi z shutō-migi-mawashi-uke.", "Shichi": "Fumi-ashi do hidari-kōkutsu-dachi z shutō-hidari-mawashi-uke.", "Hachi": "Shōtei-oi-osae-uke i fumi-ashi do migi-yonhon-nukite-oi-chūdan-uchi z kiai.", "Ku": "Mawatte nogą zakroczną w prawą stronę do hidari-kōkutsu-dachi z shutō-hidari-mawashi-uke.", "Jū": "Fumi-ashi (po prawej przekątnej) do migi-kōkutsu-dachi z shutō-migi-mawashi-uke.", "Ichi (11)": "Mawatte (135°) nogą wykroczną w tył do migi-kōkutsu-dachi z shutō-migi-mawashi-uke.", "Ni (12)": "Fumi-ashi (po lewej przekątnej) do hidari-kōkutsu-dachi z shutō-migi-mawashi-uke.", "San (13)": "Mawatte (45°) nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z lewą dłonią skierowaną grzbietem do wewnątrz na wysokości prawego policzka i haitō-gyaku-gedan-uchi z pochyleniem tułowia wykańczając z seiken-gyaku-chūdan-uchi-uke.", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi z kensei i seiken-gyaku-chūdan-zuki.", "Go (15)": "Seiken-gyaku-chudan-uchi-uke (zwolnione tempo) i chusoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi z kensei i seiken-gyaku-chūdan-zuki.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-morote-chūdan-uke.", "Shichi (17)": "Mawatte nogą zakroczną w prawą stronę do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Hachi (18)": "Yonhon-nukite-oi-me-uchi i fumi-ashi do migi-zenkutsu-dachi z seiken-oi-jōdan-uke.", "Ku (19)": "Mawatte (135°) nogą wykroczną w tył do migi-zenkutsu-dachi z seiken-oi-gedan-barai.", "Nijū": "Yonhon-nukite-oi-me-uchi i fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-jōdan-uke z kiai." }
+            },
+            {
+                name: "Pinan Sono San", id: "k_pinan_3",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke.", "Ni": "Dojście nogą zakroczną do musubi-dachi z seiken-migi-chūdan-uchi-uke-seiken-hidari-gedan-barai.", "San": "Seiken-hidari-chūdan-uchi-uke-seiken-migi-gedan-barai.", "Shi": "Mawatte prawą nogą w tył do migi-kōkutsu-dachi z seiken-oi-chudan-uchi-uke.", "Go": "Dojście nogą zakroczną do musubi-dachi z seiken-hidari-chūdan-uchi-uke-seiken-migi-gedan-barai.", "Roku": "Seiken-migi-chūdan-uchi-uke-seiken-hidari-gedan-barai.", "Shichi": "Mawatte lewą nogą w lewą stronę do hidari-zenkutsu-dachi z seiken-oi-morote-chūdan-uke.", "Hachi": "Shōtei-oi-osae-uke i fumi-ashi do migi-zenkutsu-dachi z yonhon-nukite-oi-chūdan-uchi.", "Ku": "Ura-ashi do hidari-kiba-dachi z shōtei-oi-gedan-mawashi-uke wykańczając z tettsui-oi-jōdan-uchi-uchi.", "Jū": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-chūdan-zuki z kiai.", "Ichi (11)": "Mawatte nogą zakroczną w tył ściągając ją do musubi-dachi.", "Ni (12)": "Chūsoku-migi-jōdan-mae-geri do migi-kiba-dachi z hiji-migi-chūdan-mawashi-uke.", "San (13)": "Uraken-migi-sayu-uchi.", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri do hidari-kiba-dachi z hiji-hidari-chūdan-mawashi-uke.", "Go (15)": "Uraken-hidari-sayu-uchi.", "Roku (16)": "Chūsoku-gyaku-jōdan-mae-geri do migi-kiba-dachi z hiji-migi-chudan-mawashi-uke.", "Shichi (17)": "Uraken-migi-sayū-uchi.", "Hachi (18)": "Fumi-ashi do hidari-zenkutsu-dachi z kensei i seiken-oi-chudan-zuki.", "Ku (19)": "Dosunięcie prawej nogi do wykrocznej i mawatte lewą nogą do hidari-kiba-dachi z seiken-migi-jōdan-ushiro-zuki.", "Nijū": "Tobi w prawą stronę do migi-kiba-dachi z seiken-hidari-jōdan-ushiro-zuki z kiai." }
+            },
+            {
+                name: "Pinan Sono Yon", id: "k_pinan_4",
+                steps: { "Ichi": "Migi-ryoken-goshi-gamae i mawatte w lewą stronę do hidari-kōkutsu-dachi z shotei-oi-jōdan-uchi-uke-shutō-gyaku-jōdan-uke.", "Ni": "Hidari-ryoken-goshi-gamae i mawatte nogą zakroczną w tył do migi-kōkutsu-dachi z shotei-oi-jōdan-uchi-uke-shutō-gyaku-jōdan-uke.", "San": "Mawatte nogą zakroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-gedan-jūji-uke z pochyleniem tułowia.", "Shi": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-morote-chūdan-uke.", "Go": "Ściągnięcie nogi zakrocznej do hidari-tsuruashi-dachi z migi-ryoken-goshi-gamae (zwolnione tempo).", "Roku": "Sokutō-hidari-jōdan-yoko-geri-uraken-hidari-jōdan-uchi-uchi do hidari-zenkutsu-dachi z hiji-gyaku-jōdan-mawashi-uchi.", "Shichi": "Mawatte w prawą stronę do migi-tsuruashi-dachi z hidari-ryoken-goshi-gamae (zwolnione tempo).", "Hachi": "Sokutō-migi-jōdan-yoko-geri-uraken-migi-jōdan-uchi-uchi do migi-zenkutsu-dachi z hiji-gyaku-jōdan-mawashi-uchi.", "Ku": "Kensei i mawatte w lewą stronę do hidari-zenkutsu-dachi z shutō-gyaku-ganmen-uchi.", "Jū": "Chūsoku-gyaku-jōdan-mae-geri i oi-ashi do migi-kakeashi-dachi z uraken-migi-sayū-uchi z kiai.", "Ichi (11)": "Mawatte (135°) nogą zakroczną w tył do hidari-zenkutsu-dachi z seiken-kakewake-uke (zwolnione tempo).", "Ni (12)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi z kensei i seiken-gyaku-chūdan-zuki i seiken-oi-chudan-zuki.", "San (13)": "Mawatte (90°) nogą wykroczną w prawą stronę do migi-zenkutsu-dachi z seiken-kakewake-uke (zwolnione tempo).", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi z kensei i seiken-gyaku-chūdan-zuki i seiken-oi-chudan-zuki.", "Go (15)": "Mawatte (45°) nogą wykroczną w lewą stronę do hidari-zenkutsu-dachi z seiken-hidari-morote-chūdan-uke.", "Roku (16)": "Fumi-ashi do migi-zenkutsu-dachi z seiken-migi-morote-chūdan-uke.", "Shichi (17)": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-hidari-morote-chudan-uke.", "Hachi (18)": "Wyciągnięcie rąk przed siebie na wysokość oczu.", "Ku (19)": "Hiza-gyaku-jōdan-geri z kiai, z musubi-dachi do hidari-kōkutsu-dachi z shutō-hidari-mawashi-uke.", "Nijū": "Fumi-ashi do migi-kōkutsu-dachi z shutō-migi-mawashi-uke." }
+            },
+            {
+                name: "Pinan Sono Go", id: "k_pinan_5",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-kōkutsu-dachi z seiken-oi-chudan-uchi-uke i seiken-gyaku-chūdan-zuki.", "Ni": "Mawatte nogą wykroczną w prawą stronę do musubi-dachi z migi-ryoken-goshi-gamae (zwolnione tempo).", "San": "Mawatte w prawą stronę do migi-kōkutsu-dachi z seiken-oi-chūdan-uchi-uke i seiken-gyaku-chūdan-zuki.", "Shi": "Mawatte nogą wykroczną w lewą stronę do musubi-dachi z hidari-ryoken-goshi-gamae (zwolnione tempo).", "Go": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-morote-chūdan-uke.", "Roku": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-gedan-jūji-uke z pochyleniem tułowia.", "Shichi": "Shutō-jōdan-jūji-uke (bez ściągania rąk pod pachę).", "Hachi": "Ściągnięcie rąk ruchem okrężnym do migi-te-goshi-gamae (zwolnione tempo).", "Ku": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.", "Jū": "Mawatte nogą wykroczną w tył poprzez teisoku-migi-jōdan-soto-mawashi-geri do migi-kiba-dachi z seiken-migi-gedan-barai z kiai.", "Ichi (11)": "Haishu-hidari-jōdan-uke (zwolnione tempo).", "Ni (12)": "Teisoku-migi-jōdan-soto-mawashi-geri do migi-kiba-dachi z hiji-migi-jōdan-mawashi-uchi.", "San (13)": "Oi-ashi do migi-kakeashi-dachi z uraken-oi-morote-sayu-chūdan-uchi.", "Shi (14)": "Mawatte lewą nogą w tył do hidari-kōkutsu-dachi z seiken-oi-morote-age-zuki (zwolnione tempo).", "Go (15)": "Przeskok w przód nogą zakroczną do migi-kakeashi-dachi z seiken-gedan-juji-uke z kiai.", "Roku (16)": "Mawatte prawą nogą w prawą stronę do migi-zenkutsu-dachi z seiken-oi-morote-chudan-uke.", "Shichi (17)": "Mawatte (45°) nogą zakroczną w tył do gyaku-zenkutsu-dachi z kensei i mawatte do hidari-zenkutsu-dachi z yonhon-nukite-gyaku-shita-uchi.", "Hachi (18)": "Mawatte w prawą stronę do hidari-kiba-dachi z seiken-migi-jōdan-ushiro-uchi-uke i seiken-hidari-gedan-barai.", "Ku (19)": "Mawatte (45°) w lewą stronę do gyaku-zenkutsu-dachi, wyjście prawą nogą z yonhon-nukite-gyaku-shita-uchi.", "Nijū": "Mawatte w lewą stronę do migi-kiba-dachi z seiken-hidari-jōdan-ushiro-uchi-uke i seiken-migi-gedan-barai." }
+            },
+            {
+                name: "Sanchin", id: "k_sanchin",
+                steps: { "Ichi": "Fumi-ashi do migi-sanchin-dachi z seiken-morote-chudan-uchi-uke (zwolnione tempo), seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chūdan-uchi-uke z ibuki.", "Ni": "Fumi-ashi do hidari-sanchin-dachi.", "San": "Seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chūdan-uchi-uke z ibuki.", "Shi": "Fumi-ashi do migi-sanchin-dachi.", "Go": "Lewa ręka pod pachę z ibuki.", "Roku": "Mawatte w tył nogą wykroczną poprzez migi-kakeashi-dachi do hidari-sanchin-dachi z seiken-oi-chūdan-uchi-uke.", "Shichi": "Seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chudan-uchi-uke z ibuki.", "Hachi": "Fumi-ashi do migi-sanchin-dachi.", "Ku": "Lewa ręka pod pachę z ibuki.", "Jū": "Mawatte w tył nogą wykroczną poprzez migi-kakeashi-dachi do hidari-sanchin-dachi z seiken-oi-chūdan-uchi-uke.", "Ichi (11)": "Seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chūdan-uchi-uke z ibuki.", "Ni (12)": "Fumi-ashi do migi-sanchin-dachi.", "San (13)": "Seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chūdan-uchi-uke z ibuki.", "Shi (14)": "Seiken-oi-chūdan-zuki z ibuki, seiken-oi-chudan-uchi-uke z ibuki.", "Go (15)": "Seiken-gyaku-chūdan-zuki z ibuki, seiken-gyaku-chūdan-uchi-uke z ibuki.", "Roku (16)": "Wyciągnięcie rąk przed siebie i ściągnięcie do hikite, następnie yonhon-nukite-morote-chudan-uchi z ibuki.", "Shichi (17)": "Wyciągnięcie rąk przed siebie i ściągnięcie do hikite, następnie yonhon-nukite-morote-chūdan-uchi z ibuki.", "Hachi (18)": "Wyciągnięcie rąk przed siebie i ściągnięcie do hikite, następnie yonhon-nukite-morote-chūdan-uchi z ibuki.", "Ku (19)": "Fumi-sagari do hidari-sanchin-dachi z hidari-mawashi-uke i shōtei-hidari-yama-uchi z ibuki.", "Nijū": "Fumi-sagari do migi-sanchin-dachi z migi-mawashi-uke i shōtei-migi-yama-uchi z ibuki." }
+            },
+            {
+                name: "Yantsū", id: "k_yantsu",
+                steps: { "Ichi": "Wyciągnięcie rąk przed siebie i ściągnięcie do hikite, następnie seiken-morote-jōdan-zuki i ściągnięcie do hikite.", "Ni": "Uraken-migi-mawashi-uchi.", "San": "Uraken-hidari-mawashi-uchi.", "Shi": "Yonhon-nukite-migi-chūdan-uchi (dłoń w hikite otwarta).", "Go": "Yonhon-nukite-hidari-chūdan-uchi.", "Roku": "Ściągnięcie lewej ręki do hikite (zwolnione tempo) i yonhon-nukite-sayu-jōdan-uchi (zwolnione tempo).", "Shichi": "Shōtei-hidari-jōdan-mawashi-uke z przejściem do musubi-dachi (zwolnione tempo) i fumi-ashi do migi-zenkutsu-dachi z seiken-oi-chūdan-zuki.", "Hachi": "Ściągnięcie nogi do migi-nekoashi-dachi z shōtei-oi-oroshi-uke, kōken-oi-age-uke i shutō-oi-sakotsu-uchikomi (zwolnione tempo).", "Ku": "Ściągnięcie nogi do musubi-dachi (zwolnione tempo) i fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-chūdan-zuki.", "Jū": "Ściągnięcie lewej nogi do hidari-nekoashi-dachi z shōtei-oi-oroshi-uke, kōken-oi-age-uke i shutō-oi-sakotsu-uchikomi (zwolnione tempo).", "Ichi (11)": "Mawatte w prawą stronę do musubi-dachi z shōtei-hidari-jōdan-mawashi-uke (zwolnione tempo).", "Ni (12)": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-gedan-zuki.", "San (13)": "Seiken-gyaku-jōdan-zuki i seiken-oi-chūdan-zuki z kiai.", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri i ściągnięcie do migi-nekoashi-dachi z haitō-oi-chudan-uchi-uke.", "Go (15)": "Shōtei-oi-oroshi-uke, kōken-oi-ago-uchi i shutō-oi-sakotsu-uchikomi (zwolnione tempo).", "Roku (16)": "Mawatte w tył do musubi-dachi z shōtei-migi-jōdan-mawashi-uke (zwolnione tempo).", "Shichi (17)": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-gedan-zuki.", "Hachi (18)": "Seiken-gyaku-jōdan-zuki i seiken-oi-chūdan-zuki z kiai.", "Ku (19)": "Chūsoku-gyaku-jōdan-mae-geri i ściągnięcie do hidari-nekoashi-dachi z haitō-oi-chudan-uchi-uke.", "Niju": "Shōtei-oi-oroshi-uke, kōken-oi-ago-uchi i shutō-oi-sakotsu-uchikomi (zwolnione tempo)." }
+            },
+            {
+                name: "Tsuki No Kata", id: "k_tsuki_no_kata",
+                steps: { "Ichi": "Fumi-sagari do hidari-kiba-dachi (lewa przekątna) z seiken-oi-gedan-barai i seiken-gyaku-chūdan-zuki.", "Ni": "Fumi-ashi do migi-kiba-dachi (prawa przekątna) z seiken-gyaku-chūdan-zuki.", "San": "Fumi-ashi do hidari-sanchin-dachi z seiken-gyaku-chūdan-zuki.", "Shi": "Fumi-ashi do migi-sanchin-dachi z seiken-gyaku-chūdan-zuki.", "Go": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-gyaku-gedan-zuki.", "Roku": "Fumi-ashi do migi-zenkutsu-dachi z seiken-gyaku-gedan-zuki i seiken-oi-chūdan-zuki.", "Shichi": "Mawatte w tył do hidari-sanchin-dachi z seiken-oi-chūdan-uchi-uke.", "Hachi": "Seiken-gyaku-chūdan-zuki.", "Kū": "Fumi-ashi do migi-sanchin-dachi.", "Jū": "Seiken-oi-chūdan-uchi-uke (zwolnione tempo), seiken-gyaku-chūdan-zuki i seiken-oi-chudan-zuki.", "Ichi (11)": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-jōdan-zuki.", "Ni (12)": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-jōdan-zuki.", "San (13)": "Mawatte nogą zakroczną w tył do hidari-zenkutsu-dachi z seiken-oi-gedan-barai.", "Shi (14)": "Chūsoku-gyaku-jōdan-mae-geri i mawatte do migi-kiba-dachi z seiken-migi-jun-zuki z kiai.", "Go (15)": "Fumi-ashi do hidari-kiba-dachi z seiken-hidari-jun-zuki i mawatte do migi-kiba-dachi z yonhon-nukite-migi-jun-uchi.", "Roku (16)": "Fumi-ashi do hidari-kiba-dachi z yonhon-nukite-hidari-jun-uchi.", "Shichi (17)": "Ściągnięcie lewej nogi i fumi-sagari do migi-zenkutsu-dachi z seiken-migi-chūdan-uchi-uke-seiken-hidari-gedan-barai (zwolnione tempo).", "Hachi (18)": "Ściągnięcie prawej ręki do hikite (zwolnione tempo).", "Ku (19)": "Seiken-sanbon-zuki z kiai (jōdan, gedan, chūdan).", "Niju": "Ściągnięcie prawej nogi i fumi-ashi do migi-sanchin-dachi z hidari-mawashi-uke i shotei-hidari-yama-uchi z ibuki." }
+            },
+            {
+                name: "Gekisai Dai", id: "k_gekisai_dai",
+                steps: { "Ichi": "Mawatte w lewą stronę do hidari-sanchin-dachi z seiken-oi-jōdan-uke.", "Ni": "Fumi-ashi do migi-zenkutsu-dachi z seiken-oi-jōdan-zuki.", "San": "Fumi-sagari do hidari-kiba-dachi z seiken-oi-gedan-barai.", "Shi": "Mawatte w prawą stronę nogą zakroczną do migi-sanchin-dachi z seiken-oi-jōdan-uke.", "Go": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-oi-jōdan-zuki.", "Roku": "Fumi-sagari do migi-kiba-dachi z seiken-oi-gedan-barai.", "Shichi": "Mawatte w przód do migi-sanchin-dachi z seiken-oi-chūdan-uchi-uke z ibuki.", "Hachi": "Fumi-ashi do hidari-sanchin-dachi z seiken-oi-chudan-uchi-uke z ibuki.", "Ku": "Fumi-ashi do migi-sanchin-dachi z seiken-oi-chūdan-uchi-uke z ibuki.", "Jū": "Chūsoku-gyaku-jōdan-mae-geri do hidari-zenkutsu-dachi z hiji-oi-age-uchi i uraken-oi-oroshi-ganmen-uchi oraz seiken-oi-gedan-barai i seiken-gyaku-gedan-zuki.", "Ichi (11)": "Teisoku-migi-kosoto-gari do migi-kiba-dachi z shutō-migi-jōdan-uchi-uchi z kiai.", "Ni (12)": "Fumi-ashi do hidari-sanchin-dachi z seiken-oi-chūdan-uchi-uke z ibuki.", "San (13)": "Fumi-ashi do migi-sanchin-dachi z seiken-oi-chūdan-uchi-uke z ibuki.", "Shi (14)": "Fumi-sagari do hidari-sanchin-dachi z seiken-oi-chudan-uchi-uke z ibuki.", "Go (15)": "Chūsoku-gyaku-jōdan-mae-geri do migi-zenkutsu-dachi z hiji-oi-age-uchi i uraken-oi-oroshi-ganmen-uchi oraz seiken-oi-gedan-barai i seiken-gyaku-gedan-zuki.", "Roku (16)": "Teisoku-hidari-kosoto-gari do hidari-kiba-dachi z shutō-hidari-jōdan-uchi-uchi z kiai.", "Shichi (17)": "Fumi-ashi do migi-zenkutsu-dachi z seiken-hidari-yama-zuki.", "Hachi (18)": "Fumi-ashi do hidari-zenkutsu-dachi z seiken-migi-yama-zuki.", "Ku (19)": "Fumi-sagari do migi-zenkutsu-dachi z seiken-hidari-yama-zuki." }
+            }
+        ];
+
+        // --- FUNKCJA RENDERUJĄCA KATA ---
+        function renderKata() {
+            const list = document.getElementById('kata-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            kataData.forEach(kata => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+                item.id = 'accordion-' + kata.id;
+
+                const stepsHtml = Object.entries(kata.steps).map(([count, movement]) => `
+                    <div class="requirement-section" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px;">
+                        <div class="requirement-label" style="color: var(--orange);">${count}</div>
+                        <div class="requirement-text">${movement}</div>
+                    </div>
+                `).join('');
+
+                item.innerHTML = `
+                    <div class="accordion-header" onclick="toggleAccordion('${kata.id}')">
+                        <div class="accordion-header-title">
+                            <div class="accordion-header-name">${kata.name}</div>
+                            <div class="accordion-header-belt">Układ formalny · krok po kroku</div>
+                        </div>
+                        <div class="accordion-toggle">▼</div>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body" style="gap: 14px;">
+                            ${stepsHtml}
+                            <a href="https://notebooklm.google.com/notebook/936262ea-2096-405a-b092-9afa8332f6e2" target="_blank" class="ai-button">
+                                🤖 Przeanalizuj to Kata z AI (wymagane konto Google)
+                            </a>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
         }
 
         window.addEventListener('load', initTheme);
