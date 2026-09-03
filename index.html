@@ -380,6 +380,16 @@
  
         <div id="att-list" class="card" style="display:none"></div>
         <button id="att-send-btn" class="btn btn-green" style="display:none; position:fixed; bottom:80px; width:90%; left:5%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 40;" onclick="sendAttendance()">WYŚLIJ OBECNOŚĆ</button>
+
+        <!-- WYSZUKIWARKA FREKWENCJI UCZNIA -->
+        <div class="card" style="border-left:4px solid var(--accent); margin-top:15px;">
+            <h3 style="margin-top:0">🔍 Frekwencja Ucznia</h3>
+            <div style="position:relative">
+                <input id="att-search-name" placeholder="Wpisz nazwisko ucznia..." autocomplete="off" onkeyup="showAttSearchSuggestions(this.value)">
+                <div id="att-search-suggestions" class="suggestions"></div>
+            </div>
+            <div id="att-search-result"></div>
+        </div>
  
         <!-- NAPRAWA BŁĘDU: Dodana karta historii obecności (była w JS, brakowało w HTML) -->
         <div class="card" style="border-left:4px solid var(--accent); margin-top:15px; padding-bottom: 10px;">
@@ -446,6 +456,17 @@
                 <div id="pay-queue-list"></div>
                 <button id="btn-send-all" class="btn btn-green" onclick="submitAllPayments()">✅ WYŚLIJ WSZYSTKO (0 zł)</button>
             </div>
+        </div>
+
+        <!-- WYSZUKIWARKA ROZLICZEŃ UCZNIA (krzyżowo z obecnością) -->
+        <div class="card" style="border-left:4px solid var(--orange); margin-top:15px;">
+            <h3 style="margin-top:0">🔍 Rozliczenie Ucznia</h3>
+            <p style="font-size:11px; color:#888; margin-top:-8px; margin-bottom:10px;">Zaległość liczona jest tylko za miesiące, w których uczeń miał min. 1 obecność.</p>
+            <div style="position:relative">
+                <input id="pay-search-name" placeholder="Wpisz nazwisko ucznia..." autocomplete="off" onkeyup="showPaySearchSuggestions(this.value)">
+                <div id="pay-search-suggestions" class="suggestions"></div>
+            </div>
+            <div id="pay-search-result"></div>
         </div>
  
         <div class="card" style="border-left:4px solid var(--green); margin-top:15px; padding-bottom: 10px;">
@@ -1226,7 +1247,99 @@
         alert("✅ Obecność wysłana!");
         document.getElementById('att-list').style.display = 'none';
     }
- 
+
+    // --- 3b. WYSZUKIWARKA FREKWENCJI UCZNIA ---
+
+    // Współdzielony cache raportów - pobiera go tylko raz, jeśli jeszcze nie ma danych
+    async function ensureReportsCache() {
+        if (!reportsCache) {
+            showLoader(true);
+            try {
+                const res = await fetch(SCRIPT_URL + "?action=getReports");
+                reportsCache = await res.json();
+            } catch(e) {
+                alert("Błąd pobierania danych: " + e);
+            } finally {
+                showLoader(false);
+            }
+        }
+        return reportsCache;
+    }
+
+    window.showAttSearchSuggestions = function(val) {
+        const box = document.getElementById('att-search-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        if(matches.length === 0) { box.style.display='none'; return; }
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectAttSearchMember('${escapeAttr(m.imie)}')">${m.imie}</div>`).join('');
+        box.style.display = 'block';
+    }
+
+    window.selectAttSearchMember = async function(name) {
+        document.getElementById('att-search-name').value = name;
+        document.getElementById('att-search-suggestions').style.display = 'none';
+        await renderAttendanceCardFor(name);
+    }
+
+    // Renderuje kartę z frekwencją danego ucznia: daty obecności, ile odbył, ile było max (grupa/klub), % frekwencji
+    window.renderAttendanceCardFor = async function(name) {
+        const resultBox = document.getElementById('att-search-result');
+        resultBox.innerHTML = '<div style="text-align:center; color:#888; font-size:13px; padding:10px;">Ładowanie... ⏳</div>';
+
+        await ensureReportsCache();
+        const attendance = (reportsCache && reportsCache.attendance) ? reportsCache.attendance : [];
+
+        const member = members.find(m => m.imie === name);
+        const grupa = member ? member.grupa : "";
+
+        // Sesje, na których dana osoba faktycznie była obecna
+        const presentSessions = attendance.filter(a => (a.listaOsob || []).includes(name));
+        const attendedCount = presentSessions.length;
+        const attendedDates = presentSessions.map(a => a.displayDate).sort();
+
+        // Maksymalna liczba treningów: jej grupy, a jeśli brak przypisanej grupy - całego klubu
+        const groupSessions = grupa ? attendance.filter(a => a.grupa === grupa) : attendance;
+        const maxCount = groupSessions.length;
+
+        const pct = maxCount > 0 ? Math.round((attendedCount / maxCount) * 100) : 0;
+
+        if (maxCount === 0) {
+            resultBox.innerHTML = `<div class="card" style="text-align:center; color:#999; margin-top:10px;">Brak zapisanej historii treningów dla "${name}".</div>`;
+            return;
+        }
+
+        const datesHtml = attendedDates.length
+            ? attendedDates.map(d => `<span class="chip" style="cursor:default; margin-bottom:6px;">📅 ${d}</span>`).join('')
+            : '<div style="color:#999; font-size:13px">Brak zarejestrowanych obecności.</div>';
+
+        resultBox.innerHTML = `
+            <div class="card" style="border-left:4px solid var(--accent); margin-top:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h4 style="margin:0">👤 ${name}</h4>
+                    <span style="font-size:11px; color:#888;">${grupa || 'Brak grupy'}</span>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:12px;">
+                    <div style="flex:1; background:var(--bg); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:22px; font-weight:bold; color:var(--accent);">${attendedCount}</div>
+                        <div style="font-size:10px; color:#888; text-transform:uppercase;">Odbyte</div>
+                    </div>
+                    <div style="flex:1; background:var(--bg); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:22px; font-weight:bold; color:var(--text);">${maxCount}</div>
+                        <div style="font-size:10px; color:#888; text-transform:uppercase;">Max (${grupa ? 'grupa' : 'klub'})</div>
+                    </div>
+                    <div style="flex:1; background:var(--bg); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:22px; font-weight:bold; color:${pct >= 50 ? 'var(--green)' : 'var(--red)'};">${pct}%</div>
+                        <div style="font-size:10px; color:#888; text-transform:uppercase;">Obecność</div>
+                    </div>
+                </div>
+
+                <div style="font-size:11px; font-weight:bold; color:#888; margin-bottom:6px; text-transform:uppercase;">Daty obecności:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">${datesHtml}</div>
+            </div>
+        `;
+    }
+
     // --- 4. PŁATNOŚCI (SYSTEM KOSZYKOWY) ---
     document.getElementById('pay-date').value = getLocalTodayDateString();
     
@@ -1442,7 +1555,102 @@
             container.innerHTML = `<div style="text-align:center; color:var(--red); font-size:12px; padding:10px;">Błąd pobierania: ${e.message}</div>`;
         }
     }
- 
+
+    // --- 4c. ROZLICZENIE UCZNIA (KRZYŻOWO Z OBECNOŚCIĄ) ---
+
+    const PL_MONTHS_MAP = {
+        "01":"Styczeń","02":"Luty","03":"Marzec","04":"Kwiecień","05":"Maj","06":"Czerwiec",
+        "07":"Lipiec","08":"Sierpień","09":"Wrzesień","10":"Październik","11":"Listopad","12":"Grudzień"
+    };
+
+    // Zamienia klucz miesiąca "YYYY-MM" na czytelną polską etykietę, np. "Styczeń 2026"
+    function monthKeyToLabel(key) {
+        if (!key || !key.includes('-')) return key || "Nieznany miesiąc";
+        const parts = key.split('-');
+        const y = parts[0], m = parts[1];
+        return `${PL_MONTHS_MAP[m] || m} ${y}`;
+    }
+
+    window.showPaySearchSuggestions = function(val) {
+        const box = document.getElementById('pay-search-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        if(matches.length === 0) { box.style.display='none'; return; }
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectPaySearchMember('${escapeAttr(m.imie)}')">${m.imie}</div>`).join('');
+        box.style.display = 'block';
+    }
+
+    window.selectPaySearchMember = async function(name) {
+        document.getElementById('pay-search-name').value = name;
+        document.getElementById('pay-search-suggestions').style.display = 'none';
+        await renderPaymentCardFor(name);
+    }
+
+    // Renderuje kartę rozliczeniową ucznia: dla każdego miesiąca, w którym uczeń miał
+    // min. 1 obecność, sprawdza czy ma opłaconą Składkę za ten miesiąc (zaMiesiac)
+    window.renderPaymentCardFor = async function(name) {
+        const resultBox = document.getElementById('pay-search-result');
+        resultBox.innerHTML = '<div style="text-align:center; color:#888; font-size:13px; padding:10px;">Ładowanie... ⏳</div>';
+
+        await ensureReportsCache();
+        const attendance = (reportsCache && reportsCache.attendance) ? reportsCache.attendance : [];
+        const payments = (reportsCache && reportsCache.payments) ? reportsCache.payments : [];
+
+        // 1. Miesiące (dateKey), w których uczeń miał chociaż 1 obecność
+        const attendedMonths = new Set();
+        attendance.forEach(a => {
+            if ((a.listaOsob || []).includes(name) && a.dateKey) {
+                attendedMonths.add(a.dateKey);
+            }
+        });
+
+        if (attendedMonths.size === 0) {
+            resultBox.innerHTML = `<div class="card" style="text-align:center; color:#999; margin-top:10px;">Brak obecności dla "${name}" - nie można wygenerować rozliczenia.</div>`;
+            return;
+        }
+
+        // 2. Miesiące, za które ma opłaconą Składkę (pole zaMiesiac ustawiane przy płatności typu Składka)
+        const paidMonths = new Set();
+        payments.filter(p => p.imie === name).forEach(p => {
+            const isSkladka = (p.kat || '').includes('Składka');
+            const monthCovered = p.zaMiesiac || p.dateKey;
+            if (isSkladka && monthCovered) paidMonths.add(monthCovered);
+        });
+
+        const sortedMonths = Array.from(attendedMonths).sort().reverse();
+
+        let dueCount = 0;
+        const rowsHtml = sortedMonths.map(monthKey => {
+            const isPaid = paidMonths.has(monthKey);
+            if (!isPaid) dueCount++;
+            const label = monthKeyToLabel(monthKey);
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee;">
+                    <span style="font-size:14px; font-weight:600;">${label}</span>
+                    ${isPaid
+                        ? `<span style="color:var(--green); font-weight:bold; font-size:12px;">✅ OPŁACONE</span>`
+                        : `<span style="color:var(--red); font-weight:bold; font-size:12px;">❌ ZALEGŁOŚĆ</span>`
+                    }
+                </div>
+            `;
+        }).join('');
+
+        resultBox.innerHTML = `
+            <div class="card" style="border-left:4px solid ${dueCount > 0 ? 'var(--red)' : 'var(--green)'}; margin-top:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h4 style="margin:0">👤 ${name}</h4>
+                    <span style="font-size:12px; font-weight:bold; color:${dueCount > 0 ? 'var(--red)' : 'var(--green)'};">
+                        ${dueCount > 0 ? dueCount + ' zaległ. ❌' : 'Wszystko opłacone ✅'}
+                    </span>
+                </div>
+                <div style="font-size:11px; color:#888; margin-bottom:8px;">
+                    Rozliczenie obejmuje ${sortedMonths.length} miesięcy z min. 1 obecnością.
+                </div>
+                ${rowsHtml}
+            </div>
+        `;
+    }
+
     // --- 4b. TURNIEJE ---
     function initAppListeners() {
         onValue(ref(db, 'tournaments'), (snap) => {
@@ -2555,7 +2763,7 @@ const kataData = [
             "Ichi (11)": "Shutō-oi-jōdan-kake-uke (bezpośrednio z uraken-uchi, zwolnione tempo).",
             "Ni (12)": "Fumi-ashi do migi-zenkutsu-dachi z kensei i seiken-oi-chūdan-zuki.",
             "San (13)": "Mawatte (90°) w prawą stronę do kiba-dachi z shutō-migi-hizo-uchi (lewa dłoń w hikite zaciśnięta).",
-            "Shi (14)": "Migi-tsuruashi-dachi z podwinięciem dłoni do góry (dłonie lekko załamane grzbietem do wewnątrz, palce na wysokości oczu, zwolnione tempo).",
+            "Shi (14)": "Migi-tsuruashi dachi z podwinięciem dłoni do góry (dłonie lekko załamane grzbietem do wewnątrz, palce na wysokości oczu, zwolnione tempo).",
             "Go (15)": "Sokutō-migi-jōdan-yoko-geri, chūsoku-migi-jōdan-mae-geri do kiba-dachi z seiken-morot-gedan-zuki.",
             "Roku (16)": "Mawatte do hidari-tsuruashi-dachi z podwinięciem dłoni do góry (dłonie lekko załamane grzbietem do wewnątrz, palce na wysokości oczu, zwolnione tempo).",
             "Shichi (17)": "Sokutō-hidari-jōdan-yoko-geri, chūsoku-hidari-jōdan-mae-geri do kiba-dachi z seiken-morot-gedan-zuki.",
