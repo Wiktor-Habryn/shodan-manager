@@ -1558,17 +1558,46 @@
 
     // --- 4c. ROZLICZENIE UCZNIA (KRZYŻOWO Z OBECNOŚCIĄ) ---
 
+    // Sprowadza dowolny format daty/miesiąca (czyste "YYYY-MM", pełny zrzut daty typu
+    // "Tue Mar 31 2026 18:00:00 GMT-0400 (...)", ISO string itp.) do klucza "YYYY-MM".
+    // Zwraca null, jeśli nie da się rozpoznać - taki wpis jest wtedy pomijany, zamiast
+    // pokazywać bełkot na ekranie.
+    const MONTHS_EN_TO_NUM = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+    function normalizeMonthKey(raw) {
+        if (raw === null || raw === undefined || raw === '') return null;
+        const str = String(raw).trim();
+
+        // Najpopularniejszy, czysty przypadek: "YYYY-MM" (ew. z dalszym ciągiem znaków)
+        const isoMatch = str.match(/^(\d{4})-(\d{2})/);
+        if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}`;
+
+        // Zrzut obiektu daty JS, np. "Tue Mar 31 2026 18:00:00 GMT-0400 (czas...)"
+        // Nazwa miesiąca po angielsku zostaje angielska niezależnie od lokalizacji,
+        // więc wyciągamy ją bezpośrednio zamiast dzielić string po myślniku.
+        const jsDateMatch = str.match(/([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);
+        if (jsDateMatch && MONTHS_EN_TO_NUM[jsDateMatch[1]]) {
+            return `${jsDateMatch[3]}-${MONTHS_EN_TO_NUM[jsDateMatch[1]]}`;
+        }
+
+        // Ostatnia deska ratunku - spróbuj sparsować jako datę
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+        return null;
+    }
+
     const PL_MONTHS_MAP = {
         "01":"Styczeń","02":"Luty","03":"Marzec","04":"Kwiecień","05":"Maj","06":"Czerwiec",
         "07":"Lipiec","08":"Sierpień","09":"Wrzesień","10":"Październik","11":"Listopad","12":"Grudzień"
     };
 
-    // Zamienia klucz miesiąca "YYYY-MM" na czytelną polską etykietę, np. "Styczeń 2026"
+    // Zamienia klucz miesiąca "YYYY-MM" (już znormalizowany) na czytelną polską etykietę
     function monthKeyToLabel(key) {
-        if (!key || !key.includes('-')) return key || "Nieznany miesiąc";
-        const parts = key.split('-');
-        const y = parts[0], m = parts[1];
-        return `${PL_MONTHS_MAP[m] || m} ${y}`;
+        if (!key) return "Nieznany miesiąc";
+        const m = key.match(/^(\d{4})-(\d{2})$/);
+        if (!m) return key;
+        return `${PL_MONTHS_MAP[m[2]] || m[2]} ${m[1]}`;
     }
 
     window.showPaySearchSuggestions = function(val) {
@@ -1599,8 +1628,9 @@
         // 1. Miesiące (dateKey), w których uczeń miał chociaż 1 obecność
         const attendedMonths = new Set();
         attendance.forEach(a => {
-            if ((a.listaOsob || []).includes(name) && a.dateKey) {
-                attendedMonths.add(a.dateKey);
+            if ((a.listaOsob || []).includes(name)) {
+                const mk = normalizeMonthKey(a.dateKey);
+                if (mk) attendedMonths.add(mk);
             }
         });
 
@@ -1613,8 +1643,8 @@
         const paidMonths = new Set();
         payments.filter(p => p.imie === name).forEach(p => {
             const isSkladka = (p.kat || '').includes('Składka');
-            const monthCovered = p.zaMiesiac || p.dateKey;
-            if (isSkladka && monthCovered) paidMonths.add(monthCovered);
+            const mk = normalizeMonthKey(p.zaMiesiac || p.dateKey);
+            if (isSkladka && mk) paidMonths.add(mk);
         });
 
         const sortedMonths = Array.from(attendedMonths).sort().reverse();
