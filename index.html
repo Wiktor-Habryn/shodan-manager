@@ -517,12 +517,15 @@
                 <select id="msg-group" style="margin-bottom:15px; font-weight:bold;"></select>
             </div>
 
-            <div id="msg-individual-container" style="display:none; margin-bottom:15px;">
+                        <div id="msg-individual-container" style="display:none; margin-bottom:15px;">
                 <div style="position:relative">
                     <input id="msg-individual-name" placeholder="Wpisz nazwisko ucznia..." autocomplete="off" onkeyup="showMsgIndividualSuggestions(this.value)">
                     <div id="msg-individual-suggestions" class="suggestions"></div>
                 </div>
-                <div id="msg-individual-selected" style="margin-top:8px;"></div>
+                <div id="msg-individual-queue-container" style="display:none; margin-top:10px;">
+                    <label style="font-size:12px; color:#888; font-weight:bold;">WYBRANI ODBIORCY:</label>
+                    <div id="msg-individual-queue-list" style="margin-top:5px;"></div>
+                </div>
             </div>
             
             <label style="font-size:12px; font-weight:bold; color:var(--text);">Treść wiadomości:</label>
@@ -1080,8 +1083,8 @@
 
 
     // --- FUNKCJE OBSŁUGUJĄCE WYSYŁKĘ (SMS / EMAIL) ---
-        let msgMode = "GROUP";
-    let msgSelectedIndividual = null;
+            let msgMode = "GROUP";
+    let msgIndividualQueue = [];
 
     window.setMsgMode = function(mode) {
         msgMode = mode;
@@ -1112,27 +1115,54 @@
         box.style.display = 'block';
     }
 
-    window.selectMsgIndividual = function(name) {
+        window.selectMsgIndividual = function(name) {
         const m = members.find(x => x.imie === name);
         if (!m) return;
-        msgSelectedIndividual = m;
-        document.getElementById('msg-individual-name').value = name;
-        document.getElementById('msg-individual-suggestions').style.display = 'none';
 
-        document.getElementById('msg-individual-selected').innerHTML = `
-            <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--accent);">
-                <div style="font-weight:bold">${m.imie}</div>
-                <div style="font-size:12px; color:#666; margin-top:4px;">
-                    📞 ${m.telefon || 'Brak numeru'} <br>
-                    ✉️ ${m.email || 'Brak e-maila'}
+        if (msgIndividualQueue.some(x => x.imie === name)) {
+            alert("ℹ️ Ta osoba jest już na liście!");
+            document.getElementById('msg-individual-name').value = '';
+            document.getElementById('msg-individual-suggestions').style.display = 'none';
+            return;
+        }
+
+        msgIndividualQueue.push(m);
+        document.getElementById('msg-individual-name').value = '';
+        document.getElementById('msg-individual-suggestions').style.display = 'none';
+        renderMsgIndividualQueue();
+    }
+
+    function renderMsgIndividualQueue() {
+        const container = document.getElementById('msg-individual-queue-container');
+        const listDiv = document.getElementById('msg-individual-queue-list');
+
+        if (msgIndividualQueue.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        listDiv.innerHTML = msgIndividualQueue.map((m, index) => `
+            <div class="card" style="margin-bottom:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; border-left:4px solid var(--accent);">
+                <div>
+                    <div style="font-weight:bold">${m.imie}</div>
+                    <div style="font-size:11px; color:#666; margin-top:2px;">
+                        📞 ${m.telefon || 'Brak numeru'} &nbsp; ✉️ ${m.email || 'Brak e-maila'}
+                    </div>
                 </div>
+                <button class="btn btn-outline" style="width:auto; margin:0; border-color:var(--red); color:var(--red); padding:5px 10px" onclick="removeMsgIndividualFromQueue(${index})">X</button>
             </div>
-        `;
+        `).join('');
+    }
+
+    window.removeMsgIndividualFromQueue = function(index) {
+        msgIndividualQueue.splice(index, 1);
+        renderMsgIndividualQueue();
     }
 
     function getSelectedMembersForMessage() {
         if (msgMode === 'INDIVIDUAL') {
-            return msgSelectedIndividual ? [msgSelectedIndividual] : [];
+            return msgIndividualQueue;
         }
         const group = document.getElementById('msg-group').value;
         if (group === "WSZYSCY") return members;
@@ -1141,7 +1171,7 @@
     }
 
         window.sendGroupEmail = function() {
-        if (msgMode === 'INDIVIDUAL' && !msgSelectedIndividual) return alert("❌ Wybierz odbiorcę!");
+                if (msgMode === 'INDIVIDUAL' && msgIndividualQueue.length === 0) return alert("❌ Dodaj co najmniej jedną osobę do listy!");
         const targetMembers = getSelectedMembersForMessage();
         const body = document.getElementById('msg-body').value;
         
@@ -1158,7 +1188,7 @@
     }
 
     window.sendGroupSMS = function() {
-        if (msgMode === 'INDIVIDUAL' && !msgSelectedIndividual) return alert("❌ Wybierz odbiorcę!");
+                if (msgMode === 'INDIVIDUAL' && msgIndividualQueue.length === 0) return alert("❌ Dodaj co najmniej jedną osobę do listy!");
         const targetMembers = getSelectedMembersForMessage();
         const body = document.getElementById('msg-body').value;
         
