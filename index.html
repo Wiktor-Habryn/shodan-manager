@@ -498,6 +498,27 @@
         </div>
  
     </div>
+
+<!-- WIDOK: KOMUNIKACJA (SMS / E-MAIL) -->
+    <div class="content" id="view-komunikacja" style="display:none">
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h3 style="margin-top:0">📢 Wiadomość Grupowa</h3>
+            <p style="font-size:11px; color:#888; margin-top:-8px; margin-bottom:15px;">
+                Aplikacja przygotuje numery/maile wybranej grupy i otworzy Twój telefon gotowy do wysyłki. Maile wysyłane są domyślnie jako UDW (ukryte do wiadomości) ze względu na RODO.
+            </p>
+            
+            <label style="font-size:12px; font-weight:bold; color:var(--text);">Odbiorcy (Grupa):</label>
+            <select id="msg-group" style="margin-top:5px; margin-bottom:15px; font-weight:bold;"></select>
+            
+            <label style="font-size:12px; font-weight:bold; color:var(--text);">Treść wiadomości:</label>
+            <textarea id="msg-body" rows="6" placeholder="Wpisz treść ogłoszenia (opcjonalnie)..." style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:14px; resize:vertical; margin-top:5px; margin-bottom:15px;"></textarea>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn btn-outline" style="margin:0; background:transparent; border-width:2px;" onclick="sendGroupEmail()">📧 UTWÓRZ E-MAIL</button>
+                <button class="btn btn-green" style="margin:0;" onclick="sendGroupSMS()">💬 UTWÓRZ SMS</button>
+            </div>
+        </div>
+    </div>
     
     <!-- WIDOK: TURNIEJE -->
     <div class="content" id="view-turnieje" style="display:none">
@@ -552,6 +573,7 @@
         <div class="nav-item active" onclick="nav('klub', this)"><div class="nav-icon">📇</div>Klub</div>
         <div class="nav-item" onclick="nav('obecnosc', this)"><div class="nav-icon">✅</div>Obecność</div>
         <div class="nav-item" onclick="nav('platnosci', this)"><div class="nav-icon">💳</div>Wpłata</div>
+        <div class="nav-item" onclick="nav('komunikacja', this)"><div class="nav-icon">📢</div>Wiadomość</div>
         <div class="nav-item" onclick="nav('turnieje', this)"><div class="nav-icon">🏆</div>Turniej</div>
         <div class="nav-item" onclick="nav('egzaminy', this)"><div class="nav-icon">🥋</div>Egzamin</div>
         <div class="nav-item" onclick="nav('kata', this)"><div class="nav-icon">🥋</div>KATA</div>
@@ -735,31 +757,7 @@
         </div>
     </div>
 </div>
- 
-<!-- MODAL: RAPORTY -->
-<div id="modal-reports" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
-    <div class="modal-content" style="max-height:85vh; display:flex; flex-direction:column">
-        
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-            <h3 id="report-title" style="margin:0">Raport</h3>
-            <button class="btn btn-outline" style="width:auto; padding:5px 10px; margin:0" onclick="document.getElementById('modal-reports').style.display='none'">X</button>
-        </div>
- 
-        <input id="report-search" placeholder="🔍 Szukaj osoby (wpisz nazwisko)..." style="margin-bottom:10px; border:2px solid var(--accent)" onkeyup="renderFilteredReport()">
- 
-        <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px">
-            <label style="font-size:10px; color:#888">LUB WYBIERZ MIESIĄC:</label>
-            <select id="report-month-filter" style="font-weight:bold; font-size:14px; width:100%; padding:8px" onchange="renderFilteredReport()"></select>
-        </div>
- 
-        <div id="report-content" style="overflow-y:auto; flex:1">
-            Ładowanie...
-        </div>
- 
-        <button class="btn btn-outline" style="margin-top:10px; border-color:#ccc; color:#333" onclick="document.getElementById('modal-reports').style.display='none'">WRÓĆ DO MENU</button>
-    </div>
-</div>
-    
+     
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, update, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -813,7 +811,7 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
     
-    let members = JSON.parse(localStorage.getItem('sh_members')) || [];
+    let members = []; try {     members = JSON.parse(localStorage.getItem('sh_members')) || []; } catch(e) {     console.error('Uszkodzone dane lokalne, reset:', e);     members = []; }
     let currentExamSessionId = null;
     let currentExamListener = null;
     let currentProfileName = "";
@@ -1032,32 +1030,85 @@
     
     let activeGroupFilter = "WSZYSCY";
  
+    // --- AKTUALIZACJA FUNKCJI RENDERUJĄCEJ GRUPY ---
     window.renderGroupFilters = function() {
-    const mappedGroups = members.map(m => (m.grupa && m.grupa.trim() !== "") ? m.grupa : "BRAK GRUPY");
-    const groups = ["WSZYSCY", ...new Set(mappedGroups)];
-    
-    const clubHtml = groups.map(g => 
-        `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${escapeAttr(g)}')">${g}</span>`
-    ).join('');
+        const mappedGroups = members.map(m => (m.grupa && m.grupa.trim() !== "") ? m.grupa : "BRAK GRUPY");
+        const groups = ["WSZYSCY", ...new Set(mappedGroups)];
+        
+        const clubHtml = groups.map(g => 
+            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${escapeAttr(g)}')">${g}</span>`
+        ).join('');
+        const clubEl = document.getElementById('club-group-filters');
+        if (clubEl) clubEl.innerHTML = clubHtml;
 
-    const clubEl = document.getElementById('club-group-filters');
-    if (clubEl) clubEl.innerHTML = clubHtml;
+        const attGroups = groups.filter(g => g !== "WSZYSCY" && g !== "BRAK GRUPY");
+        const attHtml = attGroups.map(g => 
+            `<span class="chip" onclick="filterAtt('${escapeAttr(g)}', this)">${g}</span>`
+        ).join('');
+        const attEl = document.getElementById('att-group-filters');
+        if (attEl) attEl.innerHTML = attHtml;
+        
+        const selectHtml = attGroups.map(g => `<option value="${g}">${g}</option>`).join('') + `<option value="BRAK">-- BRAK GRUPY --</option>`;
+        
+        const newGroupSelect = document.getElementById('new-group');
+        const profGroupSelect = document.getElementById('prof-group-edit');
+        const msgGroupSelect = document.getElementById('msg-group'); // Odbiorcy wiadomości
+        
+        if (newGroupSelect) newGroupSelect.innerHTML = selectHtml;
+        if (profGroupSelect) profGroupSelect.innerHTML = selectHtml;
+        
+        // Zasilenie listy odbiorców "Wiadomości" 
+        if (msgGroupSelect) {
+            msgGroupSelect.innerHTML = `<option value="WSZYSCY">Cały Klub (Wszyscy członkowie)</option>` + selectHtml;
+        }
+    }
 
-    const attGroups = groups.filter(g => g !== "WSZYSCY" && g !== "BRAK GRUPY");
-    const attHtml = attGroups.map(g => 
-        `<span class="chip" onclick="filterAtt('${escapeAttr(g)}', this)">${g}</span>`
-    ).join('');
 
-    const attEl = document.getElementById('att-group-filters');
-    if (attEl) attEl.innerHTML = attHtml;
-    
-    const selectHtml = attGroups.map(g => `<option>${g}</option>`).join('') + `<option value="BRAK">-- BRAK GRUPY --</option>`;
-    const newGroupSelect = document.getElementById('new-group');
-    const profGroupSelect = document.getElementById('prof-group-edit');
-    
-    if (newGroupSelect) newGroupSelect.innerHTML = selectHtml;
-    if (profGroupSelect) profGroupSelect.innerHTML = selectHtml;
-}
+    // --- FUNKCJE OBSŁUGUJĄCE WYSYŁKĘ (SMS / EMAIL) ---
+    function getSelectedMembersForMessage() {
+        const group = document.getElementById('msg-group').value;
+        if (group === "WSZYSCY") return members;
+        if (group === "BRAK") return members.filter(m => !m.grupa || m.grupa.trim() === "" || m.grupa === "BRAK GRUPY");
+        return members.filter(m => m.grupa === group);
+    }
+
+    window.sendGroupEmail = function() {
+        const targetMembers = getSelectedMembersForMessage();
+        const body = document.getElementById('msg-body').value;
+        
+        const emails = targetMembers.map(m => m.email).filter(e => e && e.trim() !== "");
+        if(emails.length === 0) return alert("❌ Brak zapisanych adresów e-mail w tej grupie!");
+        
+        // Formatuje ukryte adresy e-mail (BCC)
+        const bccList = emails.join(',');
+        const subject = encodeURIComponent("Ogłoszenie - Klub Karate Kyokushin SHODAN");
+        const bodyEnc = encodeURIComponent(body);
+        
+        // Otwiera domyślną aplikację e-mail (np. Gmail) z wypełnionymi danymi
+        window.location.href = `mailto:?bcc=${bccList}&subject=${subject}&body=${bodyEnc}`;
+    }
+
+    window.sendGroupSMS = function() {
+        const targetMembers = getSelectedMembersForMessage();
+        const body = document.getElementById('msg-body').value;
+        
+        const phones = targetMembers.map(m => m.telefon).filter(p => p && p.trim() !== "");
+        if(phones.length === 0) return alert("❌ Brak zapisanych numerów telefonu w tej grupie!");
+        
+        // Czyści numery ze spacji i łączy przecinkiem
+        const phoneList = phones.map(p => p.replace(/\s+/g, '')).join(',');
+        const bodyEnc = encodeURIComponent(body);
+        
+        // Detekcja systemu iOS vs Android dla bezpiecznego wywołania aplikacji SMS
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        let sep = '?';
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            sep = '&'; // iOS wymaga & przed parametrem body
+        }
+        
+        // Otwiera domyślną aplikację SMS w systemie z zaczytaną listą odbiorców i gotowym tekstem
+        window.location.href = `sms:${phoneList}${sep}body=${bodyEnc}`;
+    }
 
  
     window.setClubFilter = function(grp) {
@@ -1246,6 +1297,8 @@
         showLoader(false);
         alert("✅ Obecność wysłana!");
         document.getElementById('att-list').style.display = 'none';
+        document.getElementById('att-send-btn').style.display = 'none';
+        reportsCache = null;
     }
 
     // --- 3b. WYSZUKIWARKA FREKWENCJI UCZNIA ---
@@ -1401,7 +1454,8 @@
  
         const isSkladka = cats.includes("Składka");
  
-        if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");
+        if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");         
+        if(isNaN(parseFloat(kwota)) || parseFloat(kwota) <= 0) return alert("Podaj poprawną kwotę większą od zera!");
         if(isSkladka && !zaMiesiac) return alert("Wybierz miesiąc dla opłacanej składki!");
  
         transactionQueue.push({
@@ -1447,7 +1501,7 @@
             `;
         }).join('');
  
-        sendBtn.innerText = `✅ ZAKSIĘGUJ WSZYSTKO (${totalSum} zł)`;
+        sendBtn.innerText = `✅ ZAKSIĘGUJ WSZYSTKO (${totalSum.toFixed(2)} zł)`;
     }
  
     window.removeFromQueue = function(index) {
@@ -1481,6 +1535,7 @@
             alert("✅ Wszystkie wpłaty zostały zapisane!");
             transactionQueue = [];
             renderPaymentQueue();
+            reportsCache = null;
             document.getElementById('loader').innerHTML = `<div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div>`;
  
         } catch(e) {
@@ -3079,158 +3134,6 @@ window.nav = function(id, el) {
     }
     
     let reportsCache = null;
-    let currentReportType = ""; 
- 
-    async function fetchReports() {
-        showLoader(true);
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=getReports");
-            reportsCache = await res.json();
-        } catch(e) {
-            alert("Błąd: " + e);
-        } finally {
-            showLoader(false);
-        }
-    }
- 
-    function setupMonthFilter(dataArray) {
-        const select = document.getElementById('report-month-filter');
-        select.innerHTML = "";
-        
-        const months = [...new Set(dataArray.map(item => item.dateKey))];
-        months.sort().reverse();
-        months.unshift("WSZYSTKIE");
- 
-        months.forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.text = m === "WSZYSTKIE" ? "📅 CAŁA HISTORIA" : m; 
-            select.appendChild(opt);
-        });
- 
-        if(months.length > 0) {
-            select.selectedIndex = 0;
-            renderFilteredReport();
-        } else {
-            document.getElementById('report-content').innerHTML = '<div style="text-align:center; padding:20px; color:#ccc">Brak historii.</div>';
-        }
-    }
- 
-    window.renderFilteredReport = function() {
-        const searchTerm = document.getElementById('report-search').value.toLowerCase().trim();
-        const selectedMonth = document.getElementById('report-month-filter').value;
-        const container = document.getElementById('report-content');
-        
-        let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
-        let filtered = [];
-        let isSearchMode = searchTerm.length > 1; 
- 
-        if (currentReportType === 'FINANCE') {
-            if (isSearchMode) {
-                filtered = reportsCache.payments.filter(p => p.imie.toLowerCase().includes(searchTerm));
-            } else if (selectedMonth === "WSZYSTKIE") {
-                filtered = reportsCache.payments;
-            } else {
-                filtered = reportsCache.payments.filter(p => p.dateKey === selectedMonth);
-            }
-            
-            let total = 0;
-            filtered.forEach(p => {
-                total += parseFloat(p.kwota || 0);
-                html += `
-                <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--green)">
-                    <div style="display:flex; justify-content:space-between">
-                        <span style="font-weight:bold">${p.imie}</span>
-                        <span style="font-weight:bold; color:var(--green)">${p.kwota} zł</span>
-                    </div>
-                    <div style="font-size:11px; color:#666; margin-top:4px">
-                        ${p.displayDate} | ${p.kat} <br>
-                        ${p.uwagi ? '<i>' + p.uwagi + '</i>' : ''}
-                    </div>
-                </div>`;
-            });
-            
-            let title = isSearchMode ? `SUMA (WYNIKI WYSZUKIWANIA)` : `SUMA (${selectedMonth})`;
-            html = `<div style="text-align:center; font-weight:bold; margin-bottom:10px; padding:10px; background:#e6f4ea; border-radius:8px; color:var(--green); border:1px solid var(--green)">
-                        ${title}: ${total.toFixed(2)} zł
-                    </div>` + html;
- 
-        } else if (currentReportType === 'ATTENDANCE') {
-            
-            if (isSearchMode) {
-                filtered = reportsCache.attendance.filter(a => 
-                    (a.listaOsob || []).some(personName => personName.toLowerCase().includes(searchTerm))
-                );
- 
-                html += `<div style="padding:10px; font-weight:bold; color:var(--accent)">Znaleziono obecności: ${filtered.length}</div>`;
- 
-                filtered.forEach(a => {
-                    html += `
-                    <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--accent)">
-                        <div style="display:flex; justify-content:space-between; align-items:center">
-                            <div>
-                                <span style="font-weight:bold; font-size:15px">📅 ${a.displayDate}</span>
-                                <div style="font-size:12px; color:#666">${a.grupa}</div>
-                            </div>
-                            <div style="font-size:18px">✅</div>
-                        </div>
-                    </div>`;
-                });
- 
-            } else {
-                const rawList = selectedMonth === "WSZYSTKIE" 
-                    ? reportsCache.attendance 
-                    : reportsCache.attendance.filter(a => a.dateKey === selectedMonth);
-                
-                if (rawList.length > 0) {
-                    filtered = [1]; 
-                    const daysMap = {};
-                    
-                    rawList.forEach(item => {
-                        if (!daysMap[item.displayDate]) daysMap[item.displayDate] = { totalCount: 0, groups: [] };
-                        daysMap[item.displayDate].totalCount += item.licznik;
-                        daysMap[item.displayDate].groups.push(item);
-                    });
- 
-                    Object.entries(daysMap).forEach(([dateStr, data], index) => {
-                        let detailId = 'att-day-' + index;
-                        let groupsHtml = data.groups.map(g => {
-                            const names = (g.listaOsob || []).map(n => `<div>👤 ${n}</div>`).join('');
-                            return `
-                            <div style="margin-bottom:10px; background:white; padding:8px; border-radius:6px; border-left:3px solid var(--accent); box-shadow:0 1px 2px rgba(0,0,0,0.05)">
-                                <div style="font-weight:bold; color:var(--accent); font-size:13px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px">
-                                    ${g.grupa.toUpperCase()} (${g.licznik} os.)
-                                </div>
-                                <div style="font-size:13px; color:#333; line-height:1.5">${names || '<i>Brak nazwisk</i>'}</div>
-                            </div>`;
-                        }).join('');
- 
-                        html += `
-                        <div class="card" onclick="toggleDetails('${detailId}')" style="padding:12px; margin:0; border-left:4px solid #555; cursor:pointer">
-                            <div style="display:flex; justify-content:space-between; align-items:center">
-                                <div style="display:flex; align-items:center; gap:8px">
-                                    <span style="font-size:18px">📅</span>
-                                    <span style="font-weight:bold; font-size:16px">${dateStr}</span>
-                                </div>
-                                <div style="text-align:right">
-                                    <span style="font-weight:bold; color:#333; font-size:16px">Łącznie: ${data.totalCount}</span>
-                                    <span style="font-size:12px; color:#999; margin-left:5px">▼</span>
-                                </div>
-                            </div>
-                            <div id="${detailId}" style="display:none; margin-top:12px; padding:10px; background:#f2f2f7; border-radius:8px">
-                                ${groupsHtml}
-                            </div>
-                        </div>`;
-                    });
-                }
-            }
-        }
-        
-        html += '</div>';
-        
-        const noDataMsg = isSearchMode ? 'Nie znaleziono takiej osoby.' : 'Brak danych w wybranym okresie.';
-        container.innerHTML = filtered.length ? html : `<div style="text-align:center; margin-top:20px; color:#ccc">${noDataMsg}</div>`;
-    }
  
     window.toggleDetails = function(id) {
         const el = document.getElementById(id);
@@ -3238,30 +3141,7 @@ window.nav = function(id, el) {
             el.style.display = (el.style.display === 'none') ? 'block' : 'none';
         }
     }
-    
-    window.clearSearch = function() {
-        const input = document.getElementById('report-search');
-        if(input) input.value = "";
-    }
- 
-    window.showFinanceReport = async function() {
-        clearSearch(); 
-        await fetchReports();
-        currentReportType = 'FINANCE';
-        document.getElementById('report-title').innerText = "💰 Historia Wpłat";
-        setupMonthFilter(reportsCache.payments);
-        document.getElementById('modal-reports').style.display = 'flex';
-    }
- 
-    window.showAttendanceReport = async function() {
-        clearSearch(); 
-        await fetchReports();
-        currentReportType = 'ATTENDANCE';
-        document.getElementById('report-title').innerText = "✅ Historia Treningów";
-        setupMonthFilter(reportsCache.attendance);
-        document.getElementById('modal-reports').style.display = 'flex';
-    }
- 
+     
     window.toggleCompForm = function(forceOpen = false) {
         const body = document.getElementById('comp-form-body');
         const icon = document.getElementById('form-toggle-icon');
