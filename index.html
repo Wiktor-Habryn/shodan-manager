@@ -507,8 +507,23 @@
                 Aplikacja przygotuje numery/maile wybranej grupy i otworzy Twój telefon gotowy do wysyłki. Maile wysyłane są domyślnie jako UDW (ukryte do wiadomości) ze względu na RODO.
             </p>
             
-            <label style="font-size:12px; font-weight:bold; color:var(--text);">Odbiorcy (Grupa):</label>
-            <select id="msg-group" style="margin-top:5px; margin-bottom:15px; font-weight:bold;"></select>
+            <label style="font-size:12px; font-weight:bold; color:var(--text);">Do kogo wysłać?</label>
+            <div class="row" style="margin-top:5px; margin-bottom:15px;">
+                <button id="msg-mode-group" class="btn" style="margin:0;" onclick="setMsgMode('GROUP')">👥 Grupa</button>
+                <button id="msg-mode-individual" class="btn btn-outline" style="margin:0;" onclick="setMsgMode('INDIVIDUAL')">👤 Konkretna osoba</button>
+            </div>
+
+            <div id="msg-group-container">
+                <select id="msg-group" style="margin-bottom:15px; font-weight:bold;"></select>
+            </div>
+
+            <div id="msg-individual-container" style="display:none; margin-bottom:15px;">
+                <div style="position:relative">
+                    <input id="msg-individual-name" placeholder="Wpisz nazwisko ucznia..." autocomplete="off" onkeyup="showMsgIndividualSuggestions(this.value)">
+                    <div id="msg-individual-suggestions" class="suggestions"></div>
+                </div>
+                <div id="msg-individual-selected" style="margin-top:8px;"></div>
+            </div>
             
             <label style="font-size:12px; font-weight:bold; color:var(--text);">Treść wiadomości:</label>
             <textarea id="msg-body" rows="6" placeholder="Wpisz treść ogłoszenia (opcjonalnie)..." style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:14px; resize:vertical; margin-top:5px; margin-bottom:15px;"></textarea>
@@ -1065,14 +1080,68 @@
 
 
     // --- FUNKCJE OBSŁUGUJĄCE WYSYŁKĘ (SMS / EMAIL) ---
+        let msgMode = "GROUP";
+    let msgSelectedIndividual = null;
+
+    window.setMsgMode = function(mode) {
+        msgMode = mode;
+        const groupBtn = document.getElementById('msg-mode-group');
+        const indivBtn = document.getElementById('msg-mode-individual');
+        const groupContainer = document.getElementById('msg-group-container');
+        const indivContainer = document.getElementById('msg-individual-container');
+
+        if (mode === 'GROUP') {
+            groupBtn.classList.remove('btn-outline');
+            indivBtn.classList.add('btn-outline');
+            groupContainer.style.display = 'block';
+            indivContainer.style.display = 'none';
+        } else {
+            indivBtn.classList.remove('btn-outline');
+            groupBtn.classList.add('btn-outline');
+            groupContainer.style.display = 'none';
+            indivContainer.style.display = 'block';
+        }
+    }
+
+    window.showMsgIndividualSuggestions = function(val) {
+        const box = document.getElementById('msg-individual-suggestions');
+        if(val.length < 2) { box.style.display='none'; return; }
+        const matches = members.filter(m => m.imie.toLowerCase().includes(val.toLowerCase()));
+        if(matches.length === 0) { box.style.display='none'; return; }
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectMsgIndividual('${escapeAttr(m.imie)}')">${m.imie}</div>`).join('');
+        box.style.display = 'block';
+    }
+
+    window.selectMsgIndividual = function(name) {
+        const m = members.find(x => x.imie === name);
+        if (!m) return;
+        msgSelectedIndividual = m;
+        document.getElementById('msg-individual-name').value = name;
+        document.getElementById('msg-individual-suggestions').style.display = 'none';
+
+        document.getElementById('msg-individual-selected').innerHTML = `
+            <div class="card" style="padding:10px; margin:0; border-left:4px solid var(--accent);">
+                <div style="font-weight:bold">${m.imie}</div>
+                <div style="font-size:12px; color:#666; margin-top:4px;">
+                    📞 ${m.telefon || 'Brak numeru'} <br>
+                    ✉️ ${m.email || 'Brak e-maila'}
+                </div>
+            </div>
+        `;
+    }
+
     function getSelectedMembersForMessage() {
+        if (msgMode === 'INDIVIDUAL') {
+            return msgSelectedIndividual ? [msgSelectedIndividual] : [];
+        }
         const group = document.getElementById('msg-group').value;
         if (group === "WSZYSCY") return members;
         if (group === "BRAK") return members.filter(m => !m.grupa || m.grupa.trim() === "" || m.grupa === "BRAK GRUPY");
         return members.filter(m => m.grupa === group);
     }
 
-    window.sendGroupEmail = function() {
+        window.sendGroupEmail = function() {
+        if (msgMode === 'INDIVIDUAL' && !msgSelectedIndividual) return alert("❌ Wybierz odbiorcę!");
         const targetMembers = getSelectedMembersForMessage();
         const body = document.getElementById('msg-body').value;
         
@@ -1089,6 +1158,7 @@
     }
 
     window.sendGroupSMS = function() {
+        if (msgMode === 'INDIVIDUAL' && !msgSelectedIndividual) return alert("❌ Wybierz odbiorcę!");
         const targetMembers = getSelectedMembersForMessage();
         const body = document.getElementById('msg-body').value;
         
