@@ -538,7 +538,7 @@
         </div>
     </div>
     
-    <!-- WIDOK: TURNIEJE -->
+    <!-- WIDOK: TURNIEJE 
     <div class="content" id="view-turnieje" style="display:none">
         <div class="card">
             <h3>🏆 Turnieje</h3>
@@ -552,7 +552,24 @@
         </div>
         <div id="tournaments-list"></div>
     </div>
- 
+ -->
+
+    <!-- WIDOK: ZAMÓWIENIA SPRZĘTU -->
+    <div class="content" id="view-zamowienia" style="display:none">
+        <div class="card" style="border-left:4px solid var(--accent); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 style="margin:0">📦 Sprzęt</h3>
+                <div style="font-size:11px; color:#888;">Panel realizacji zamówień</div>
+            </div>
+            <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 12px; font-size:12px; border-color:var(--accent); color:var(--accent)" onclick="fetchOrders()">Odśwież 🔄</button>
+        </div>
+        
+        <div id="orders-list">
+            <div style="text-align:center; color:#888; font-size:13px; padding: 20px;">Kliknij "Odśwież", aby pobrać nowe zamówienia...</div>
+        </div>
+    </div>
+
+    
     <!-- WIDOK: EGZAMINY -->
     <div class="content" id="view-egzaminy" style="display:none">
         <div class="card">
@@ -592,7 +609,8 @@
         <div class="nav-item" onclick="nav('obecnosc', this)"><div class="nav-icon">✅</div>Obecność</div>
         <div class="nav-item" onclick="nav('platnosci', this)"><div class="nav-icon">💳</div>Wpłata</div>
         <div class="nav-item" onclick="nav('komunikacja', this)"><div class="nav-icon">📢</div>Wiadomość</div>
-        <div class="nav-item" onclick="nav('turnieje', this)"><div class="nav-icon">🏆</div>Turniej</div>
+       <!-- <div class="nav-item" onclick="nav('turnieje', this)"><div class="nav-icon">🏆</div>Turniej</div> -->
+        <div class="nav-item" onclick="nav('zamowienia', this)"><div class="nav-icon">📦</div>Zamówienia</div>
         <div class="nav-item" onclick="nav('egzaminy', this)"><div class="nav-icon">🥋</div>Egzamin</div>
         <div class="nav-item" onclick="nav('kata', this)"><div class="nav-icon">🥋</div>KATA</div>
         <div class="nav-item" onclick="nav('requirements', this)"><div class="nav-icon">📚</div>Wymagania</div>
@@ -2390,6 +2408,98 @@ window.passCandidate = function(cid, imie) {
     if(m) m.stopien = finalRank;
     localStorage.setItem('sh_members', JSON.stringify(members));
 }
+
+
+    // --- 6. MODUŁ ZAMÓWIEŃ SPRZĘTU ---
+    let ordersCache = [];
+
+    window.fetchOrders = async function() {
+        showLoader(true);
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=getOrders");
+            ordersCache = await res.json();
+            renderOrders();
+        } catch(e) {
+            alert("Błąd pobierania zamówień: " + e);
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    window.renderOrders = function() {
+        const list = document.getElementById('orders-list');
+        if (!ordersCache || ordersCache.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#ccc; padding:20px;">Brak zamówień w arkuszu.</div>';
+            return;
+        }
+
+        list.innerHTML = ordersCache.reverse().map(o => {
+            const isPaid = o.oplacone === 'TAK';
+            const isDelivered = o.wydane === 'TAK';
+            
+            // Kalkulacja kosztów (na podstawie sztywnych cen klubu)
+            let total = 0;
+            let items = [];
+            if(o.gi && o.gi.includes('Basic')) { total += 180; items.push(`🥋 Gi Basic (${o.rozmiarBasic || 'Brak roz.'})`); }
+            if(o.gi && o.gi.includes('Premium')) { total += 400; items.push(`🥋 Gi Premium (${o.rozmiarPremium || 'Brak roz.'})`); }
+            if(o.pas) { total += 50; items.push(`🥋 Pas (${o.pas})`); }
+
+            return `
+            <div class="card" style="border-left: 5px solid ${isPaid ? 'var(--green)' : 'var(--red)'}; opacity: ${isDelivered ? '0.5' : '1'};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <b style="font-size:16px;">${o.imie}</b>
+                        <div style="font-size:12px; color:#666; margin-top:4px; line-height:1.4;">${items.join('<br>')}</div>
+                        <div style="font-size:11px; color:#888; margin-top:4px;">📞 ${o.telefon}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:18px; font-weight:bold; color:${isPaid ? 'var(--green)' : 'var(--red)'}">${total} zł</span>
+                        <div style="font-size:10px; color:#888; margin-top:4px;">${o.data ? o.data.substring(0, 10) : ''}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #eee; display:flex; flex-direction:column; gap:8px;">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size:12px; font-weight:bold; color:var(--text);">Status płatności:</label>
+                        <select style="width:auto; padding:6px 10px; margin:0; font-size:12px; font-weight:bold; border-color:${isPaid ? 'var(--green)' : 'var(--red)'}; color:${isPaid ? 'var(--green)' : 'var(--red)'}; background:transparent;" onchange="updateOrder(${o.row}, 'oplacone', this.value)">
+                            <option value="NIE" ${!isPaid ? 'selected' : ''}>❌ Brak wpłaty</option>
+                            <option value="TAK" ${isPaid ? 'selected' : ''}>✅ Opłacone</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size:12px; font-weight:bold; color:var(--text);">Metoda wpłaty:</label>
+                        <select style="width:auto; padding:6px 10px; margin:0; font-size:12px; background:transparent;" onchange="updateOrder(${o.row}, 'metoda', this.value)">
+                            <option value="">-- Wybierz --</option>
+                            <option value="Gotówka" ${o.metoda === 'Gotówka' ? 'selected' : ''}>💵 Gotówka</option>
+                            <option value="BLIK" ${o.metoda === 'BLIK' ? 'selected' : ''}>📱 BLIK</option>
+                            <option value="Przelew" ${o.metoda === 'Przelew' ? 'selected' : ''}>🏦 Przelew</option>
+                        </select>
+                    </div>
+
+                    <button class="btn ${isDelivered ? 'btn-outline' : ''}" style="margin-top:4px; padding:10px; font-size:13px; ${isDelivered ? 'color:#888; border-color:#ccc;' : 'background:var(--accent);'}" onclick="updateOrder(${o.row}, 'wydane', '${isDelivered ? 'NIE' : 'TAK'}')">
+                        ${isDelivered ? '📦 COFNIJ OZNACZENIE WYDANIA' : '📦 OZNACZ SPRZĘT JAKO WYDANY'}
+                    </button>
+
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.updateOrder = async function(row, field, value) {
+        showLoader(true);
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ type: 'updateOrder', row: row, field: field, value: value })
+            });
+            await window.fetchOrders(); // Odświeża listę po zapisie
+        } catch(e) {
+            alert("Błąd zapisu w arkuszu: " + e);
+            showLoader(false);
+        }
+    }
 // --- BAZA PRZEBIEGU KATA ---
 const kataData = [
     {
