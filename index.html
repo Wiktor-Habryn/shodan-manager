@@ -2435,17 +2435,29 @@ window.passCandidate = function(cid, imie) {
 
         list.innerHTML = ordersCache.reverse().map(o => {
             const isPaid = o.oplacone === 'TAK';
-            const isDelivered = o.wydane === 'TAK';
             
             // Kalkulacja kosztów (na podstawie sztywnych cen klubu)
             let total = 0;
             let items = [];
-            if(o.gi && o.gi.includes('Basic')) { total += 180; items.push(`🥋 Gi Basic (${o.rozmiarBasic || 'Brak roz.'})`); }
-            if(o.gi && o.gi.includes('Premium')) { total += 400; items.push(`🥋 Gi Premium (${o.rozmiarPremium || 'Brak roz.'})`); }
-            if(o.pas) { total += 50; items.push(`🥋 Pas (${o.pas})`); }
+            
+            // Logika odczytująca "Przedmiot zamówienia" lub stare kolumny "Rodzaj Gi"
+            let przedmiot = o.przedmiot || o.gi || '';
+            
+            if(przedmiot.includes('Basic')) { 
+                total += 180; 
+                items.push(`🥋 Gi Basic (${o.rozmiarBasic || o.rozmiar || '?'})`); 
+            }
+            if(przedmiot.includes('Premium')) { 
+                total += 400; 
+                items.push(`🥋 Gi Premium (${o.rozmiarPremium || o.rozmiar || '?'})`); 
+            }
+            if(o.pas) { 
+                total += 50; 
+                items.push(`🥋 Pas (${o.pas})`); 
+            }
 
             return `
-            <div class="card" style="border-left: 5px solid ${isPaid ? 'var(--green)' : 'var(--red)'}; opacity: ${isDelivered ? '0.5' : '1'};">
+            <div class="card" style="border-left: 5px solid ${isPaid ? 'var(--green)' : 'var(--red)'}; opacity: ${isPaid ? '0.7' : '1'};">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
                         <b style="font-size:16px;">${o.imie}</b>
@@ -2453,35 +2465,19 @@ window.passCandidate = function(cid, imie) {
                         <div style="font-size:11px; color:#888; margin-top:4px;">📞 ${o.telefon}</div>
                     </div>
                     <div style="text-align:right;">
-                        <span style="font-size:18px; font-weight:bold; color:${isPaid ? 'var(--green)' : 'var(--red)'}">${total} zł</span>
+                        <span style="font-size:18px; font-weight:bold; color:${isPaid ? 'var(--green)' : 'var(--red)'}">${total > 0 ? total + ' zł' : 'Do wyceny'}</span>
                         <div style="font-size:10px; color:#888; margin-top:4px;">${o.data ? o.data.substring(0, 10) : ''}</div>
                     </div>
                 </div>
 
-                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #eee; display:flex; flex-direction:column; gap:8px;">
-                    
+                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #eee;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label style="font-size:12px; font-weight:bold; color:var(--text);">Status płatności:</label>
+                        <label style="font-size:12px; font-weight:bold; color:var(--text);">Status zamówienia:</label>
                         <select style="width:auto; padding:6px 10px; margin:0; font-size:12px; font-weight:bold; border-color:${isPaid ? 'var(--green)' : 'var(--red)'}; color:${isPaid ? 'var(--green)' : 'var(--red)'}; background:transparent;" onchange="updateOrder(${o.row}, 'oplacone', this.value)">
-                            <option value="NIE" ${!isPaid ? 'selected' : ''}>❌ Brak wpłaty</option>
-                            <option value="TAK" ${isPaid ? 'selected' : ''}>✅ Opłacone</option>
+                            <option value="NIE" ${!isPaid ? 'selected' : ''}>❌ OCZEKUJE NA WPŁATĘ</option>
+                            <option value="TAK" ${isPaid ? 'selected' : ''}>✅ OPŁACONE (ZAMKNIĘTE)</option>
                         </select>
                     </div>
-
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label style="font-size:12px; font-weight:bold; color:var(--text);">Metoda wpłaty:</label>
-                        <select style="width:auto; padding:6px 10px; margin:0; font-size:12px; background:transparent;" onchange="updateOrder(${o.row}, 'metoda', this.value)">
-                            <option value="">-- Wybierz --</option>
-                            <option value="Gotówka" ${o.metoda === 'Gotówka' ? 'selected' : ''}>💵 Gotówka</option>
-                            <option value="BLIK" ${o.metoda === 'BLIK' ? 'selected' : ''}>📱 BLIK</option>
-                            <option value="Przelew" ${o.metoda === 'Przelew' ? 'selected' : ''}>🏦 Przelew</option>
-                        </select>
-                    </div>
-
-                    <button class="btn ${isDelivered ? 'btn-outline' : ''}" style="margin-top:4px; padding:10px; font-size:13px; ${isDelivered ? 'color:#888; border-color:#ccc;' : 'background:var(--accent);'}" onclick="updateOrder(${o.row}, 'wydane', '${isDelivered ? 'NIE' : 'TAK'}')">
-                        ${isDelivered ? '📦 COFNIJ OZNACZENIE WYDANIA' : '📦 OZNACZ SPRZĘT JAKO WYDANY'}
-                    </button>
-
                 </div>
             </div>`;
         }).join('');
