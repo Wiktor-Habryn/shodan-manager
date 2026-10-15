@@ -63,8 +63,24 @@
         position: relative; 
     }
     
-    .header { padding: 15px; background: var(--nav); border-bottom: 1px solid var(--border); font-weight: 800; font-size: 20px; text-align: center; display:flex; justify-content:space-between; align-items:center; z-index:10; flex-shrink: 0;}
-    
+    .header { 
+        padding: 15px; 
+        background: rgba(255, 255, 255, 0.82); 
+        backdrop-filter: blur(12px); 
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border); 
+        font-weight: 800; 
+        font-size: 20px; 
+        text-align: center; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        z-index: 10; 
+        flex-shrink: 0;
+    }
+    body.dark .header, body.dark .nav-bar {
+        background: rgba(28, 28, 30, 0.82);
+    }
     .content { 
         flex: 1; 
         overflow-y: auto; 
@@ -83,7 +99,9 @@
     
     .nav-bar { 
         width: 100%; 
-        background: var(--nav); 
+        background: rgba(255, 255, 255, 0.82); 
+        backdrop-filter: blur(12px); 
+        -webkit-backdrop-filter: blur(12px);
         border-top: 1px solid var(--border); 
         display: flex; 
         justify-content: space-around; 
@@ -92,7 +110,9 @@
         z-index: 20; 
         flex-shrink: 0; 
         overflow-x: auto;
+        scrollbar-width: none;
     }
+    .nav-bar::-webkit-scrollbar { display: none; }
     
     .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #8e8e93; cursor: pointer; flex: 1; min-width: 60px; }
     .nav-item.active { color: var(--accent); }
@@ -130,8 +150,18 @@
     .suggestion-item { padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
     .suggestion-item:hover { background: var(--soft-blue); }
     
-    .filters-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
- 
+    .filters-scroll { 
+        overflow-x: auto; 
+        white-space: nowrap; 
+        padding-bottom: 5px; 
+        margin-bottom: 10px; 
+        -webkit-overflow-scrolling: touch; 
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+    .filters-scroll::-webkit-scrollbar { display: none; }
+	
+
     .medal-btn { width:30px; height:30px; border-radius:50%; border:2px solid #ccc; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
     .medal-btn.active { border-color: transparent; color: white; }
 
@@ -204,6 +234,90 @@
         .nav-item { font-size: 13px; }
         .nav-icon { font-size: 26px; }
     }
+	
+	/* UCHWYT MODALA (PILL HANDLE - iOS STYLE) */
+    .modal-content::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border);
+        margin: -6px auto 14px auto;
+        flex-shrink: 0;
+    }
+
+    /* POWIADOMIENIA TOAST */
+    #toast-container {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 90%;
+        max-width: 420px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--card);
+        color: var(--text);
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+        border: 1px solid var(--border);
+        border-left: 5px solid var(--accent);
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.25s ease 2.5s forwards;
+    }
+    .toast.success { border-left-color: var(--green); }
+    .toast.error { border-left-color: var(--red); }
+    .toast.warning { border-left-color: var(--orange); }
+
+    @keyframes toastIn {
+        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toastOut {
+        to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    }
+
+    /* KAFELKI KATEGORII WPŁAT ("ZA CO?") */
+    .pay-cat-tile {
+        background: var(--bg);
+        padding: 12px 10px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--subtext);
+        transition: all 0.15s ease;
+        user-select: none;
+        text-align: center;
+    }
+    .pay-cat-tile input {
+        display: none; /* Ukrywa surowy kwadratowy checkbox */
+    }
+    .pay-cat-tile:has(input:checked) {
+        background: var(--soft-blue);
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 2px 6px rgba(0, 122, 255, 0.15);
+    }
+    .pay-cat-tile:active {
+        transform: scale(0.97);
+    }
     </style>
 </head>
 <body>
@@ -227,6 +341,7 @@
 </div>
  
 <div id="loader"><div style="font-size:40px">🥋</div><div style="margin-top:15px">Przetwarzanie...</div></div>
+<div id="toast-container"></div>
  
 <div class="app-container" id="app-content" style="display:none"> 
     <div class="header">
@@ -365,15 +480,25 @@
             </div>
  
             <label style="font-size:12px; color:var(--subtext); margin-top:10px; display:block">Za co? (Zaznacz)</label>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:5px">
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;">
-                    <input type="checkbox" class="pay-cat" id="cat-skladka" value="Składka" style="width:20px; margin:0;" onchange="toggleMonthSelect()"> Składka
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px">
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" id="cat-skladka" value="Składka" onchange="toggleMonthSelect()"> 📅 Składka
                 </label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="pay-cat" value="Egzamin" style="width:20px; margin:0;"> Egzamin</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="pay-cat" value="1 Trening" style="width:20px; margin:0;"> 1 Trening</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="pay-cat" value="Sprzęt" style="width:20px; margin:0;"> Sprzęt</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="pay-cat" value="Członkostwo" style="width:20px; margin:0;"> Członkostwo</label>
-                <label style="background:var(--bg); padding:10px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" class="pay-cat" value="Inne" style="width:20px; margin:0;"> Inne</label>
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" value="Egzamin"> 🥋 Egzamin
+                </label>
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" value="1 Trening"> 🥊 1 Trening
+                </label>
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" value="Sprzęt"> 📦 Sprzęt
+                </label>
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" value="Członkostwo"> 🪪 Członkostwo
+                </label>
+                <label class="pay-cat-tile">
+                    <input type="checkbox" class="pay-cat" value="Inne"> ✨ Inne
+                </label>
             </div>
             
             <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
@@ -762,7 +887,29 @@
         if (!str) return '';
         return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
+	window.showToast = function(msg, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
 
+        // Automatyczne dobranie koloru na podstawie ikony w tekście
+        if (type === 'info') {
+            if (msg.includes('✅') || msg.includes('📤')) type = 'success';
+            else if (msg.includes('❌') || msg.toLowerCase().includes('błąd')) type = 'error';
+            else if (msg.includes('ℹ️') || msg.includes('⚠️')) type = 'warning';
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerText = msg;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 2800);
+    };
+
+    // Automatyczna zamiana wszystkich systemowych alert() na nowoczesny Toast:
+    window.alert = (msg) => window.showToast(msg);
     // Zamykanie wszystkich list podpowiedzi po kliknięciu poza pole
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.suggestions') && !e.target.matches('input')) {
@@ -1066,23 +1213,33 @@
     let activeGroupFilter = "WSZYSCY";
  
     window.renderGroupFilters = function() {
+        // Zliczanie uczniów w poszczególnych grupach
+        const counts = { "WSZYSCY": members.length };
+        members.forEach(m => {
+            const g = (m.grupa && m.grupa.trim() !== "") ? m.grupa : "BRAK GRUPY";
+            counts[g] = (counts[g] || 0) + 1;
+        });
+
         const mappedGroups = members.map(m => (m.grupa && m.grupa.trim() !== "") ? m.grupa : "BRAK GRUPY");
         const groups = ["WSZYSCY", ...new Set(mappedGroups)];
         
+        // Filtry w zakładce Klub z licznikiem (np. "WSZYSCY (45)")
         const clubHtml = groups.map(g => 
-            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${escapeAttr(g)}')">${g}</span>`
+            `<span class="chip ${activeGroupFilter===g ? 'active' : ''}" onclick="setClubFilter('${escapeAttr(g)}')">${g} (${counts[g] || 0})</span>`
         ).join('');
         const clubEl = document.getElementById('club-group-filters');
         if (clubEl) clubEl.innerHTML = clubHtml;
 
+        // Filtry w zakładce Obecność z licznikiem
         const attGroups = groups.filter(g => g !== "WSZYSCY" && g !== "BRAK GRUPY");
         const attHtml = attGroups.map(g => 
-            `<span class="chip" onclick="filterAtt('${escapeAttr(g)}', this)">${g}</span>`
+            `<span class="chip" onclick="filterAtt('${escapeAttr(g)}', this)">${g} (${counts[g] || 0})</span>`
         ).join('');
         const attEl = document.getElementById('att-group-filters');
         if (attEl) attEl.innerHTML = attHtml;
         
-        const selectHtml = attGroups.map(g => `<option value="${g}">${g}</option>`).join('') + `<option value="BRAK">-- BRAK GRUPY --</option>`;
+        // Listy rozwijane <select> (tutaj zostawiamy czyste nazwy grup jako value)
+        const selectHtml = attGroups.map(g => `<option value="${g}">${g} (${counts[g] || 0})</option>`).join('') + `<option value="BRAK">-- BRAK GRUPY --</option>`;
         
         const newGroupSelect = document.getElementById('new-group');
         const profGroupSelect = document.getElementById('prof-group-edit');
@@ -1091,7 +1248,7 @@
         if (newGroupSelect) newGroupSelect.innerHTML = selectHtml;
         if (profGroupSelect) profGroupSelect.innerHTML = selectHtml;
         if (msgGroupSelect) {
-            msgGroupSelect.innerHTML = `<option value="WSZYSCY">Cały Klub (Wszyscy członkowie)</option>` + selectHtml;
+            msgGroupSelect.innerHTML = `<option value="WSZYSCY">Cały Klub (${members.length} os.)</option>` + selectHtml;
         }
     }
 
@@ -3651,14 +3808,6 @@
             alert("Nie udało się skopiować...");
         });
     };
-
-    // --- ZAMYKANIE PODPOWIEDZI PO KLIKNIĘCIU POZA POLEM ---
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.suggestions') && !e.target.matches('input')) {
-            document.querySelectorAll('.suggestions').forEach(s => s.style.display = 'none');
-        }
-    });
-
 </script>
 </body>
 </html>
