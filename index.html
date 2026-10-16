@@ -499,9 +499,32 @@
             </div>
             
             <div class="row" style="margin-top:10px">
-                <div style="flex:1"><label style="font-size:12px; color:var(--subtext)">Kwota</label><input type="number" id="pay-amount" placeholder="PLN" style="font-size:18px; font-weight:bold"></div>
-                <div style="flex:1"><label style="font-size:12px; color:var(--subtext)">Metoda</label>
-                    <select id="pay-method" style="height:48px"><option>Gotówka</option><option>BLIK</option><option>Karta</option><option>Przelew</option></select>
+                <div style="flex:1.2">
+                    <label style="font-size:12px; color:var(--subtext); display:flex; justify-content:space-between; align-items:center;">
+                        <span>Kwota</span>
+                        <span id="pay-discount-info" style="font-size:10px; color:var(--orange); font-weight:bold; display:none;">Rabat -25%</span>
+                    </label>
+                    <div style="display:flex; gap:6px; align-items:stretch;">
+                        <input type="number" id="pay-amount" placeholder="PLN" style="font-size:18px; font-weight:bold; margin-bottom:0; flex:1;" oninput="handleBaseAmountInput()">
+                        <button type="button" id="btn-discount-25" onclick="toggleFamilyDiscount()" title="Rabat rodzinny -25%" style="
+                            width: auto;
+                            padding: 0 12px;
+                            margin: 0;
+                            border-radius: 8px;
+                            border: 2px solid var(--orange);
+                            background: transparent;
+                            color: var(--orange);
+                            font-weight: 800;
+                            font-size: 13px;
+                            cursor: pointer;
+                            flex-shrink: 0;
+                            transition: all 0.2s ease;
+                        ">-25%</button>
+                    </div>
+                </div>
+                <div style="flex:1">
+                    <label style="font-size:12px; color:var(--subtext)">Metoda</label>
+                    <select id="pay-method" style="height:48px; margin-bottom:0;"><option>Gotówka</option><option>BLIK</option><option>Karta</option><option>Przelew</option></select>
                 </div>
             </div>
             
@@ -515,7 +538,7 @@
                     <select id="pay-for-month" style="border: 2px solid var(--accent); background-color: var(--soft-blue); color: var(--text); font-weight:bold; font-size:14px; padding: 11px;"></select>
                 </div>
             </div>
- 
+
             <label style="font-size:12px; color:var(--subtext); margin-top:10px; display:block">Za co? (Zaznacz)</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px">
                 <label class="pay-cat-tile">
@@ -541,7 +564,7 @@
             <input id="pay-notes" placeholder="Uwagi (opcjonalne)" style="margin-top:10px">
             
             <button class="btn" style="background-color:var(--accent); margin-top:15px" onclick="addToPaymentQueue()">➕ DODAJ DO LISTY</button>
- 
+
             <div id="pay-queue-container" style="display:none; margin-top:20px; border-top:2px dashed var(--border); padding-top:10px">
                 <label style="font-size:12px; color:var(--subtext); font-weight:bold">LISTA DO WYSŁANIA:</label>
                 <div id="pay-queue-list" style="margin-top:8px;"></div>
@@ -559,7 +582,7 @@
             </div>
             <div id="pay-search-result"></div>
         </div>
- 
+
         <div class="card" style="border-left:4px solid var(--green); margin-top:15px; padding-bottom: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePayHistoryList()">
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -573,7 +596,7 @@
                 <div style="text-align:center; color:var(--subtext); font-size:13px; padding: 10px;">Kliknij "Odśwież", aby pobrać listę z bazy...</div>
             </div>
         </div>
- 
+
         <div class="card" style="border-left:4px solid var(--red); margin-top:15px; padding-bottom: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDebtsList()">
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -1731,6 +1754,72 @@
         document.getElementById('pay-suggestions').style.display='none';
     }
  
+    // --- OBSŁUGA RABATU RODZINNEGO -25% ---
+    let isFamilyDiscountActive = false;
+    let basePaymentAmount = null; // przechowuje kwotę przed rabatem (np. 160 -> 120)
+
+    window.handleBaseAmountInput = function() {
+        const amountEl = document.getElementById('pay-amount');
+        const val = parseFloat(amountEl.value);
+        if (isNaN(val)) {
+            basePaymentAmount = null;
+            return;
+        }
+        // Jeśli użytkownik ręcznie wpisuje kwotę, zapamiętaj ją jako nową bazę
+        if (isFamilyDiscountActive) {
+            // Jeśli rabat był już włączony, a trener wpisuje nową kwotę z klawiatury,
+            // wyłączamy na chwilę podświetlenie, by nie gubić rachuby, lub traktujemy wpisaną wartość jako bazową po kliknięciu
+            basePaymentAmount = val / 0.75;
+        } else {
+            basePaymentAmount = val;
+        }
+    };
+
+    window.toggleFamilyDiscount = function() {
+        const amountEl = document.getElementById('pay-amount');
+        const btn = document.getElementById('btn-discount-25');
+        const info = document.getElementById('pay-discount-info');
+        const currentVal = parseFloat(amountEl.value);
+
+        isFamilyDiscountActive = !isFamilyDiscountActive;
+
+        if (isFamilyDiscountActive) {
+            // Włączenie rabatu -25%
+            btn.style.background = 'var(--orange)';
+            btn.style.color = '#ffffff';
+            if (info) info.style.display = 'inline';
+
+            if (!isNaN(currentVal) && currentVal > 0) {
+                basePaymentAmount = currentVal;
+                const discounted = Math.round(currentVal * 0.75 * 100) / 100;
+                amountEl.value = discounted;
+            }
+        } else {
+            // Wyłączenie rabatu (przywrócenie kwoty bazowej)
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--orange)';
+            if (info) info.style.display = 'none';
+
+            if (basePaymentAmount !== null && !isNaN(basePaymentAmount)) {
+                amountEl.value = Math.round(basePaymentAmount * 100) / 100;
+            } else if (!isNaN(currentVal) && currentVal > 0) {
+                amountEl.value = Math.round((currentVal / 0.75) * 100) / 100;
+            }
+        }
+    };
+
+    function resetFamilyDiscountUI() {
+        isFamilyDiscountActive = false;
+        basePaymentAmount = null;
+        const btn = document.getElementById('btn-discount-25');
+        const info = document.getElementById('pay-discount-info');
+        if (btn) {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--orange)';
+        }
+        if (info) info.style.display = 'none';
+    }
+
     window.addToPaymentQueue = function() {
         const imie = document.getElementById('pay-name').value.trim();
         const kwota = document.getElementById('pay-amount').value;
@@ -1738,28 +1827,34 @@
         const dataWplaty = document.getElementById('pay-date').value; 
         const zaMiesiac = document.getElementById('pay-for-month').value;
         const metoda = document.getElementById('pay-method').value;
-        const uwagi = document.getElementById('pay-notes').value;
- 
+        let uwagi = document.getElementById('pay-notes').value.trim();
+
         const isSkladka = cats.includes("Składka");
- 
+
         if(!imie || !kwota || !cats) return alert("Uzupełnij: Kto, Kwota i Za co!");         
         if(isNaN(parseFloat(kwota)) || parseFloat(kwota) <= 0) return alert("Podaj poprawną kwotę większą od zera!");
         if(isSkladka && !zaMiesiac) return alert("Wybierz miesiąc dla opłacanej składki!");
- 
+
+        // Automatyczna adnotacja o rabacie rodzinnym w uwagach
+        if (isFamilyDiscountActive && !uwagi.toLowerCase().includes('-25%')) {
+            uwagi = uwagi ? `${uwagi} (Rabat -25%)` : "Rabat rodzinny -25%";
+        }
+
         transactionQueue.push({
             imie, kwota, cats, dataWplaty, 
             zaMiesiac: isSkladka ? zaMiesiac : "", 
             metoda, uwagi
         });
- 
+
         document.getElementById('pay-name').value = '';
         document.getElementById('pay-amount').value = '';
         document.getElementById('pay-notes').value = '';
         document.querySelectorAll('.pay-cat').forEach(el => el.checked = false);
         
+        resetFamilyDiscountUI();
         toggleMonthSelect(); 
         renderPaymentQueue();
-    }
+    };
  
     function renderPaymentQueue() {
         const container = document.getElementById('pay-queue-container');
