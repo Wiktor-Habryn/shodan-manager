@@ -355,6 +355,60 @@
     .pay-cat-tile:active {
         transform: scale(0.97);
     }
+
+	/* ===== EGZAMINY ===== */
+.exam-hero { background: var(--card); border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.exam-hero-title { font-size: 20px; font-weight: 800; }
+.exam-hero-sub { font-size: 12px; color: var(--subtext); margin: 3px 0 14px 0; }
+.exam-import-btn { background: linear-gradient(135deg, #ff9500, #ff6a00); margin-top: 0; box-shadow: 0 4px 12px rgba(255,149,0,0.3); }
+.exam-or { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--subtext); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.exam-or::before, .exam-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+.exam-session-card { cursor: pointer; padding: 16px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.exam-session-card:active { transform: scale(0.985); }
+.exam-session-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.exam-session-name { font-weight: 800; font-size: 16px; line-height: 1.25; }
+.exam-session-meta { font-size: 12px; color: var(--subtext); margin-top: 3px; }
+.exam-del-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--red); font-size: 15px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.exam-progress { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; display: flex; margin-top: 14px; }
+.exam-progress span { height: 100%; transition: width 0.3s ease; }
+.seg-pass { background: var(--green); }
+.seg-fail { background: var(--red); }
+.seg-absent { background: var(--orange); }
+.exam-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.exam-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; white-space: nowrap; }
+.badge-wait { background: var(--soft-blue); color: var(--accent); }
+.badge-pass { background: var(--soft-green); color: var(--green); }
+.badge-fail { background: var(--soft-red); color: var(--red); }
+.badge-absent { background: var(--soft-amber); color: var(--orange); }
+
+.exam-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
+.exam-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.exam-stat { background: var(--bg); border-radius: 12px; padding: 10px 4px; text-align: center; border: 1px solid var(--border); }
+.exam-stat b { display: block; font-size: 20px; line-height: 1.1; }
+.exam-stat span { font-size: 9px; text-transform: uppercase; color: var(--subtext); letter-spacing: 0.4px; }
+
+.exam-cand { background: var(--card); border: 1px solid var(--border); border-left: 5px solid #c6c6c8; border-radius: 14px; padding: 12px; margin-bottom: 10px; transition: border-color 0.3s ease, opacity 0.3s ease; }
+.exam-cand.st-PASS { border-left-color: var(--green); }
+.exam-cand.st-FAILED { border-left-color: var(--red); }
+.exam-cand.st-ABSENT { border-left-color: var(--orange); opacity: 0.8; }
+.exam-cand-top { display: flex; align-items: center; gap: 12px; }
+.exam-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--soft-blue); color: var(--accent); font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.exam-cand-name { font-weight: 700; font-size: 15px; }
+.exam-rank-row { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; font-size: 12px; color: var(--subtext); }
+.rank-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--text); }
+.rank-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
+.exam-target-select { font-size: 12px; padding: 4px 6px; font-weight: 700; margin: 0; width: auto; max-width: 150px; border-radius: 8px; }
+.exam-actions { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+.exam-act { padding: 10px 6px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid; background: transparent; transition: transform 0.1s; }
+.exam-act:active { transform: scale(0.96); }
+.exam-act.pass { background: var(--green); border-color: var(--green); color: #fff; }
+.exam-act.fail { border-color: var(--red); color: var(--red); }
+.exam-act.absent { border-color: #8e8e93; color: #8e8e93; }
+.exam-result { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; font-weight: 700; }
+.exam-undo { background: none; border: 1px solid var(--border); color: var(--subtext); border-radius: 8px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+
+
     </style>
 </head>
 <body>
@@ -675,18 +729,19 @@
     </div>
     
     <!-- WIDOK: EGZAMINY -->
-    <div class="content" id="view-egzaminy" style="display:none">
-        <div class="card">
-            <h3 style="margin-top:0">🥋 Sesje Egzaminacyjne</h3>
-            <button class="btn btn-orange" onclick="importExamFromExcel()">📥 POBIERZ Z EXCELA ("Egzaminy")</button>
-            <div style="margin:10px 0; text-align:center; font-size:12px; color:var(--subtext)">- LUB UTWÓRZ RĘCZNIE -</div>
-            <div class="row">
-                <input id="exam-session-name" placeholder="Np. Zima 2026" style="margin-bottom:0">
-                <button class="btn" style="width:auto; margin:0" onclick="createExamSession()">+</button>
-            </div>
+<div class="content" id="view-egzaminy" style="display:none">
+    <div class="exam-hero">
+        <div class="exam-hero-title">🥋 Sesje egzaminacyjne</div>
+        <div class="exam-hero-sub">Zaimportuj listę z arkusza lub utwórz sesję ręcznie</div>
+        <button class="btn exam-import-btn" onclick="importExamFromExcel()">📥 Pobierz z Excela („Egzaminy")</button>
+        <div class="exam-or">lub</div>
+        <div class="row">
+            <input id="exam-session-name" placeholder="Np. Zima 2026" style="margin-bottom:0">
+            <button class="btn" style="width:auto; margin:0; padding:0 20px" onclick="createExamSession()">+</button>
         </div>
-        <div id="exam-sessions-list"></div>
     </div>
+    <div id="exam-sessions-list"></div>
+</div>
  
     <!-- WIDOK: WYMAGANIA EGZAMINACYJNE -->
     <div class="content" id="view-requirements" style="display:none">
@@ -788,27 +843,43 @@
 </div>
  
 <!-- MODAL: LISTA EGZAMINACYJNA -->
-<div id="modal-exam-list" class="modal-overlay">
-    <div class="modal-content" style="height:90vh">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-            <h3 id="exam-title" style="margin:0">Sesja</h3>
-            <div style="display:flex; gap:5px">
-                <button class="btn btn-green" style="width:auto; margin:0; padding:5px 10px; font-size:12px" onclick="passAllCandidates()">✅ WSZYSCY ZDALI</button>
-                <button class="btn btn-outline" style="width:auto; margin:0; padding:5px 10px" onclick="closeExamModal()">ZAMKNIJ</button>
-            </div>
+<div id="modal-exam-list" class="modal-overlay" onclick="if(event.target===this) closeExamModal()">
+    <div class="modal-content" style="height:90vh; display:flex; flex-direction:column;">
+
+        <!-- Nagłówek -->
+        <div class="exam-modal-head" style="flex-shrink:0;">
+            <h3 id="exam-title" style="margin:0; font-size:18px;">Sesja</h3>
+            <button class="btn btn-outline" style="width:auto; margin:0; padding:6px 14px;" onclick="closeExamModal()">ZAMKNIJ</button>
         </div>
-        <div class="card" style="background:var(--bg)">
-            <label style="font-size:12px">Dodaj kandydata ręcznie (stopień dobierze się sam wg wieku):</label>
-            <div style="position:relative; margin-top:4px;">
-                <input id="exam-add-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showExamSuggestions(this.value)">
-                <div id="exam-suggestions" class="suggestions"></div>
+
+        <!-- Podsumowanie i filtry -->
+        <div id="exam-summary" class="exam-summary" style="flex-shrink:0;"></div>
+        <div class="filters-scroll" id="exam-filter" style="flex-shrink:0;"></div>
+
+        <button class="btn btn-green" style="margin:0 0 12px 0; font-size:14px; flex-shrink:0;" onclick="passAllCandidates()">
+            ✅ WSZYSCY OCZEKUJĄCY ZDALI
+        </button>
+
+        <!-- Dodawanie kandydata (zwijane) -->
+        <div class="card" style="background:var(--bg); padding:12px; flex-shrink:0;">
+            <div onclick="toggleExamAddForm()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:bold; font-size:13px; color:var(--accent);">
+                <span>➕ DODAJ KANDYDATA RĘCZNIE</span>
+                <span id="exam-add-icon">▼</span>
             </div>
-            <div class="row" style="margin-top:5px">
+            <div id="exam-add-body" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+                <label style="font-size:11px; color:var(--subtext);">Stopień dobierze się sam według wieku</label>
+                <div style="position:relative; margin-top:4px;">
+                    <input id="exam-add-name" placeholder="Wpisz nazwisko..." autocomplete="off" onkeyup="showExamSuggestions(this.value)">
+                    <div id="exam-suggestions" class="suggestions"></div>
+                </div>
+                <label style="font-size:11px; color:var(--subtext); margin-top:6px; display:block;">Zdaje na stopień</label>
                 <select id="exam-add-rank" style="width:100%"></select>
+                <button class="btn" style="margin-top:8px;" onclick="addCandidate()">DODAJ DO LISTY</button>
             </div>
-            <button class="btn" onclick="addCandidate()">DODAJ DO LISTY</button>
         </div>
-        <div id="exam-candidates-list" style="margin-bottom:50px"></div>
+
+        <!-- Lista kandydatów (przewijana) -->
+        <div id="exam-candidates-list" style="flex:1; min-height:0; overflow-y:auto; padding-bottom:30px;"></div>
     </div>
 </div>
  
@@ -2159,19 +2230,44 @@
             if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:var(--subtext); margin-top:10px">Brak turniejów</div>';
         });
  
-        onValue(ref(db, 'exams'), (snap) => {
+                onValue(ref(db, 'exams'), (snap) => {
             const data = snap.val() || {};
-            document.getElementById('exam-sessions-list').innerHTML = Object.entries(data).reverse().map(([id, s]) => `
-                <div class="card" onclick="openExamSession('${id}', '${escapeAttr(s.name)}')" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
-                    <div>
-                        <div style="font-weight:bold">${s.name}</div>
-                        <div style="font-size:12px; color:var(--subtext)">Kliknij, aby otworzyć</div>
+            const entries = Object.entries(data).reverse();
+            const el = document.getElementById('exam-sessions-list');
+            if (!el) return;
+
+            if (entries.length === 0) {
+                el.innerHTML = '<div style="text-align:center; color:var(--subtext); padding:30px 10px; font-size:14px">Brak sesji egzaminacyjnych.<br>Pobierz listę z Excela lub utwórz nową.</div>';
+                return;
+            }
+
+            el.innerHTML = entries.map(([id, s]) => {
+                const st = examStats(s.candidates);
+                const done = st.PASS + st.FAILED + st.ABSENT;
+                const pct = (n) => st.total ? (n / st.total * 100) : 0;
+                return `
+                <div class="card exam-session-card" onclick="openExamSession('${id}', '${escapeAttr(s.name)}')">
+                    <div class="exam-session-top">
+                        <div>
+                            <div class="exam-session-name">${s.name}</div>
+                            <div class="exam-session-meta">${st.total === 0 ? 'Brak kandydatów' : `${st.total} kandydatów · rozpatrzono ${done}/${st.total}`}</div>
+                        </div>
+                        <button class="exam-del-btn" title="Usuń sesję" onclick="deleteExamSession('${id}', event)">🗑️</button>
                     </div>
-                    <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; border-color:var(--red); color:var(--red)" onclick="deleteExamSession('${id}', event)">
-                        🗑️
-                    </button>
-                </div>
-            `).join('');
+                    ${st.total > 0 ? `
+                    <div class="exam-progress">
+                        <span class="seg-pass" style="width:${pct(st.PASS)}%"></span>
+                        <span class="seg-fail" style="width:${pct(st.FAILED)}%"></span>
+                        <span class="seg-absent" style="width:${pct(st.ABSENT)}%"></span>
+                    </div>
+                    <div class="exam-badges">
+                        ${st.WAIT ? `<span class="exam-badge badge-wait">⏳ ${st.WAIT} czeka</span>` : ''}
+                        ${st.PASS ? `<span class="exam-badge badge-pass">✅ ${st.PASS} zdało</span>` : ''}
+                        ${st.FAILED ? `<span class="exam-badge badge-fail">❌ ${st.FAILED} nie zdało</span>` : ''}
+                        ${st.ABSENT ? `<span class="exam-badge badge-absent">💤 ${st.ABSENT} nieob.</span>` : ''}
+                    </div>` : ''}
+                </div>`;
+            }).join('');
         });
     }
  
@@ -2504,6 +2600,122 @@
         }
     }
 
+	// ===== POMOCNICZE DLA EGZAMINÓW =====
+    let examFilter = 'ALL';
+
+    function examStats(cands) {
+        const s = { total: 0, WAIT: 0, PASS: 0, FAILED: 0, ABSENT: 0 };
+        Object.values(cands || {}).forEach(c => {
+            s.total++;
+            const k = c.status || 'WAIT';
+            s[k] = (s[k] || 0) + 1;
+        });
+        return s;
+    }
+
+    function rankColor(rank) {
+        const r = String(rank || '');
+        if (/dan/i.test(r)) return '#1c1c1e';
+        const m = r.match(/^(\d+)/);
+        if (!m) return '#f2f2f7';
+        const n = parseInt(m[1], 10);
+        if (n >= 9) return '#ff9500';
+        if (n >= 7) return '#0a84ff';
+        if (n >= 5) return '#eab308';
+        if (n >= 3) return '#34c759';
+        return '#8b5a2b';
+    }
+
+    function rankPill(rank) {
+        return `<span class="rank-pill"><span class="rank-dot" style="background:${rankColor(rank)}"></span>${rank || '—'}</span>`;
+    }
+
+    function initials(name) {
+        return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
+
+    window.setExamFilter = function(f) {
+        examFilter = f;
+        renderExamCandidates();
+    };
+
+    window.resetCandidate = function(cid, imie) {
+        if (!confirm(`Przywrócić ${imie} do statusu „oczekuje"?`)) return;
+        update(ref(db, `exams/${currentExamSessionId}/candidates/${cid}`), { status: 'WAIT' });
+    };
+
+    function renderExamCandidates() {
+        const entries = Object.entries(currentExamData || {});
+        const st = examStats(currentExamData);
+
+        const sumEl = document.getElementById('exam-summary');
+        if (sumEl) {
+            sumEl.innerHTML = `
+                <div class="exam-stat"><b style="color:var(--accent)">${st.WAIT}</b><span>Czeka</span></div>
+                <div class="exam-stat"><b style="color:var(--green)">${st.PASS}</b><span>Zdało</span></div>
+                <div class="exam-stat"><b style="color:var(--red)">${st.FAILED}</b><span>Nie zdało</span></div>
+                <div class="exam-stat"><b style="color:var(--orange)">${st.ABSENT}</b><span>Nieob.</span></div>`;
+        }
+
+        const filters = [['ALL', 'Wszyscy', st.total], ['WAIT', '⏳ Czeka', st.WAIT], ['PASS', '✅ Zdało', st.PASS], ['FAILED', '❌ Nie zdało', st.FAILED], ['ABSENT', '💤 Nieob.', st.ABSENT]];
+        const filtEl = document.getElementById('exam-filter');
+        if (filtEl) {
+            filtEl.innerHTML = filters.map(([k, label, n]) =>
+                `<span class="chip ${examFilter === k ? 'active' : ''}" onclick="setExamFilter('${k}')">${label} (${n})</span>`
+            ).join('');
+        }
+
+        const visible = entries.filter(([, c]) => examFilter === 'ALL' || (c.status || 'WAIT') === examFilter);
+        const listEl = document.getElementById('exam-candidates-list');
+        if (!listEl) return;
+
+        if (visible.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; color:var(--subtext); padding:30px 10px; font-size:14px">Brak osób w tym widoku.</div>';
+            return;
+        }
+
+        listEl.innerHTML = visible.map(([cid, c]) => {
+            const status = c.status || 'WAIT';
+            const member = members.find(x => x.imie === c.imie);
+            const fromRank = member ? member.stopien : '';
+
+            const rankRow = status === 'WAIT'
+                ? `${fromRank ? rankPill(fromRank) + '<span>➔</span>' : ''}
+                   <select id="rank-${cid}" class="exam-target-select" onclick="event.stopPropagation()" onchange="updateCandidateRank('${currentExamSessionId}', '${cid}', this.value)">
+                       ${getRankOptions(c.targetRank)}
+                   </select>`
+                : `<span>Stopień:</span>${rankPill(c.targetRank)}`;
+
+            let bottom = '';
+            if (status === 'WAIT') {
+                bottom = `
+                <div class="exam-actions">
+                    <button class="exam-act pass" onclick="passCandidate('${cid}', '${escapeAttr(c.imie)}')">✓ Zdał</button>
+                    <button class="exam-act fail" onclick="failCandidate('${cid}', '${escapeAttr(c.imie)}', 'FAILED')">✗ Nie</button>
+                    <button class="exam-act absent" onclick="failCandidate('${cid}', '${escapeAttr(c.imie)}', 'ABSENT')">💤</button>
+                </div>`;
+            } else if (status === 'PASS') {
+                bottom = `<div class="exam-result" style="color:var(--green)"><span>✅ Zdał na ${c.targetRank}</span></div>`;
+            } else if (status === 'FAILED') {
+                bottom = `<div class="exam-result" style="color:var(--red)"><span>❌ Nie zdał</span><button class="exam-undo" onclick="resetCandidate('${cid}', '${escapeAttr(c.imie)}')">↩ Cofnij</button></div>`;
+            } else {
+                bottom = `<div class="exam-result" style="color:var(--orange)"><span>💤 Nieobecny</span><button class="exam-undo" onclick="resetCandidate('${cid}', '${escapeAttr(c.imie)}')">↩ Cofnij</button></div>`;
+            }
+
+            return `
+            <div class="exam-cand st-${status}">
+                <div class="exam-cand-top">
+                    <div class="exam-avatar">${initials(c.imie)}</div>
+                    <div style="flex:1; min-width:0">
+                        <div class="exam-cand-name">${c.imie}</div>
+                        <div class="exam-rank-row">${rankRow}</div>
+                    </div>
+                </div>
+                ${bottom}
+            </div>`;
+        }).join('');
+    }
+
     window.openExamSession = function(id, name) {
         if (currentExamListener) {
             off(currentExamListener);
@@ -2511,81 +2723,16 @@
         }
 
         currentExamSessionId = id;
+        examFilter = 'ALL';
         document.getElementById('exam-title').innerText = name;
         document.getElementById('modal-exam-list').style.display = 'flex';
-        
+
         const examRef = ref(db, `exams/${id}/candidates`);
         currentExamListener = examRef;
-        
+
         onValue(examRef, (snap) => {
-            const list = snap.val() || {};
-            currentExamData = list;
-
-            function borderColor(status) {
-                if (status === 'PASS')   return 'var(--green)';
-                if (status === 'FAILED') return 'var(--red)';
-                if (status === 'ABSENT') return 'var(--orange)';
-                return '#c6c6c8';
-            }
-
-            function actionsHtml(cid, c) {
-                if (c.status === 'PASS') {
-                    return `<div style="font-size:22px; line-height:1;">✅</div>`;
-                }
-                if (c.status === 'FAILED') {
-                    return `<div style="font-size:13px; font-weight:600; color:var(--red); line-height:1.3; text-align:right;">❌<br>Nie zdał</div>`;
-                }
-                if (c.status === 'ABSENT') {
-                    return `<div style="font-size:13px; font-weight:600; color:var(--subtext); line-height:1.3; text-align:right;">💤<br>Nieobecny</div>`;
-                }
-                return `
-                    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
-                        <button class="btn btn-green"
-                            style="width:auto; padding:6px 14px; margin:0; font-size:13px;"
-                            onclick="passCandidate('${cid}', '${escapeAttr(c.imie)}')">
-                            ZDAŁ
-                        </button>
-                        <button
-                            title="Nie zdał"
-                            style="width:30px; height:30px; border-radius:50%; border:2px solid var(--red);
-                                   background:transparent; color:var(--red); font-size:14px; font-weight:700;
-                                   cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;"
-                            onclick="failCandidate('${cid}', '${escapeAttr(c.imie)}', 'FAILED')">
-                            ✗
-                        </button>
-                        <button
-                            title="Nieobecny"
-                            style="width:30px; height:30px; border-radius:50%; border:2px solid #8e8e93;
-                                   background:transparent; color:#8e8e93; font-size:14px;
-                                   cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;"
-                            onclick="failCandidate('${cid}', '${escapeAttr(c.imie)}', 'ABSENT')">
-                            💤
-                        </button>
-                    </div>
-                `;
-            }
-
-            document.getElementById('exam-candidates-list').innerHTML = Object.entries(list).map(([cid, c]) => `
-                <div class="card" style="border-left:5px solid ${borderColor(c.status)}; transition: border-color 0.3s ease;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                        <div style="flex:1; min-width:0;">
-                            <b style="display:block; margin-bottom:4px;">${c.imie}</b>
-                            <div style="font-size:12px; color:var(--subtext);">
-                                Zdaje na:&nbsp;
-                                ${c.status === 'WAIT' ? 
-                                    `<select id="rank-${cid}" style="font-size:12px; padding:3px 6px; font-weight:bold; max-width:160px;"
-                                        onchange="updateCandidateRank('${id}', '${cid}', this.value)"
-                                        onclick="event.stopPropagation()">
-                                        ${getRankOptions(c.targetRank)}
-                                    </select>` 
-                                    : `<b>${c.targetRank}</b>`
-                                }
-                            </div>
-                        </div>
-                        ${actionsHtml(cid, c)}
-                    </div>
-                </div>
-            `).join('');
+            currentExamData = snap.val() || {};
+            renderExamCandidates();
         });
     }
 
@@ -3365,6 +3512,16 @@
         }
     };
 
+
+    window.toggleExamAddForm = function() {
+        const body = document.getElementById('exam-add-body');
+        const icon = document.getElementById('exam-add-icon');
+        if (!body || !icon) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? 'block' : 'none';
+        icon.innerText = open ? '▲' : '▼';
+    };
+	
     window.toggleDebtsList = function(forceOpen = false) {
         const list = document.getElementById('debts-inline-list');
         const icon = document.getElementById('debts-toggle-icon');
