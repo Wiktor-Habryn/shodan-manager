@@ -666,7 +666,7 @@
         </div>
     </div>
 
-    <!-- WIDOK: KOMUNIKACJA (SMS / E-MAIL) -->
+   <!-- WIDOK: KOMUNIKACJA (SMS / E-MAIL) -->
     <div class="content" id="view-komunikacja" style="display:none">
         <div class="card" style="border-left: 4px solid var(--accent);">
             <h3 style="margin-top:0">📢 Wiadomość Grupowa</h3>
@@ -681,7 +681,22 @@
             </div>
 
             <div id="msg-group-container">
-                <select id="msg-group" style="margin-bottom:15px; font-weight:bold;"></select>
+                <select id="msg-group" style="margin-bottom:10px; font-weight:bold;" onchange="renderMsgGroupMembersChecklist()"></select>
+                
+                <!-- ROZWIJANA LISTA OSÓB W GRUPIE Z MOŻLIWOŚCIĄ ODZNACZENIA -->
+                <div style="margin-bottom: 15px;">
+                    <div onclick="toggleMsgGroupChecklist()" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:12px; font-weight:bold; color:var(--accent); background:var(--soft-blue); padding:8px 12px; border-radius:8px; border:1px solid var(--accent);">
+                        <span id="msg-group-checklist-title">👥 Dostosuj listę odbiorców ▼</span>
+                        <span id="msg-group-checklist-count" style="font-size:11px; opacity:0.85;"></span>
+                    </div>
+                    <div id="msg-group-checklist-body" style="display:none; margin-top:8px; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; max-height:220px; overflow-y:auto;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                            <span style="font-size:11px; color:var(--subtext); font-weight:600;">Odznacz osoby, do których nie chcesz wysyłać:</span>
+                            <button type="button" class="btn btn-outline" style="width:auto; margin:0; padding:2px 8px; font-size:10px;" onclick="toggleAllMsgGroupChecklist()">Odznacz/Zaznacz wszystkich</button>
+                        </div>
+                        <div id="msg-group-checklist-items" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="msg-individual-container" style="display:none; margin-bottom:15px;">
@@ -1307,14 +1322,27 @@
         
         if (newGroupSelect) newGroupSelect.innerHTML = selectHtml;
         if (profGroupSelect) profGroupSelect.innerHTML = selectHtml;
+        
         if (msgGroupSelect) {
-            msgGroupSelect.innerHTML = `<option value="WSZYSCY">Cały Klub (${members.length} os.)</option>` + selectHtml;
+            // Zliczamy osoby, które mają przypisaną jakąkolwiek grupę
+            const assignedCount = members.filter(m => m.grupa && m.grupa.trim() !== "" && m.grupa !== "BRAK GRUPY").length;
+            
+            msgGroupSelect.innerHTML = 
+                `<option value="WSZYSCY">Cały Klub (${members.length} os.)</option>` +
+                `<option value="TYLKO_W_GRUPACH">👥 Tylko osoby w grupach (${assignedCount} os.)</option>` +
+                selectHtml;
+                
+            // Odświeżamy checklistę po załadowaniu opcji
+            if (typeof renderMsgGroupMembersChecklist === 'function') {
+                renderMsgGroupMembersChecklist();
+            }
         }
     }
 
-    // --- KOMUNIKACJA (SMS / EMAIL + SZABLONY) ---
+   // --- KOMUNIKACJA (SMS / EMAIL + SZABLONY) ---
     let msgMode = "GROUP";
     let msgIndividualQueue = [];
+    let msgGroupExcluded = new Set(); // Przechowuje odznaczone nazwiska w trybie grupy
 
     window.applyMsgTemplate = function(type) {
         const box = document.getElementById('msg-body');
@@ -1346,6 +1374,104 @@
             indivContainer.style.display = 'block';
         }
     }
+
+    // --- CHECKLISTA GRUPOWA (ODZNACZANIE OSÓB) ---
+    window.toggleMsgGroupChecklist = function() {
+        const body = document.getElementById('msg-group-checklist-body');
+        const title = document.getElementById('msg-group-checklist-title');
+        if (!body) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        if (title) {
+            title.innerText = isOpen 
+                ? '👥 Dostosuj listę odbiorców ▼' 
+                : '👥 Zwiń listę odbiorców ▲';
+        }
+    };
+
+    window.renderMsgGroupMembersChecklist = function() {
+        msgGroupExcluded.clear();
+        const baseList = getBaseMembersForSelectedGroup();
+        const container = document.getElementById('msg-group-checklist-items');
+        const countBadge = document.getElementById('msg-group-checklist-count');
+        if (!container) return;
+
+        if (countBadge) countBadge.innerText = `${baseList.length} os.`;
+
+        if (baseList.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; color:var(--subtext); text-align:center; padding:10px;">Brak osób w wybranej grupie.</div>';
+            return;
+        }
+
+        container.innerHTML = baseList.map((m) => {
+            const hasPhone = m.telefon && m.telefon.trim() !== "";
+            const hasEmail = m.email && m.email.trim() !== "";
+            return `
+                <label style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; background:var(--card); border-radius:6px; border:1px solid var(--border); font-size:13px; cursor:pointer;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" checked onchange="toggleMsgGroupMember('${escapeAttr(m.imie)}', this.checked)" style="width:16px; height:16px; margin:0; cursor:pointer;">
+                        <div>
+                            <span style="font-weight:600;">${m.imie}</span>
+                            <span style="font-size:10px; color:var(--subtext); margin-left:4px;">(${m.grupa || 'Brak'})</span>
+                        </div>
+                    </div>
+                    <div style="font-size:11px; color:var(--subtext); display:flex; gap:6px;">
+                        ${hasPhone ? '<span>📞</span>' : '<span style="opacity:0.3">📞</span>'}
+                        ${hasEmail ? '<span>✉️</span>' : '<span style="opacity:0.3">✉️</span>'}
+                    </div>
+                </label>
+            `;
+        }).join('');
+    };
+
+    window.toggleMsgGroupMember = function(imie, isChecked) {
+        if (isChecked) {
+            msgGroupExcluded.delete(imie);
+        } else {
+            msgGroupExcluded.add(imie);
+        }
+        updateMsgGroupActiveCount();
+    };
+
+    window.toggleAllMsgGroupChecklist = function() {
+        const checkboxes = document.querySelectorAll('#msg-group-checklist-items input[type="checkbox"]');
+        if (checkboxes.length === 0) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const newState = !allChecked;
+        
+        checkboxes.forEach(cb => cb.checked = newState);
+        const baseList = getBaseMembersForSelectedGroup();
+        if (newState) {
+            msgGroupExcluded.clear();
+        } else {
+            baseList.forEach(m => msgGroupExcluded.add(m.imie));
+        }
+        updateMsgGroupActiveCount();
+    };
+
+    function updateMsgGroupActiveCount() {
+        const baseList = getBaseMembersForSelectedGroup();
+        const activeCount = baseList.length - msgGroupExcluded.size;
+        const countBadge = document.getElementById('msg-group-checklist-count');
+        if (countBadge) {
+            countBadge.innerText = `${activeCount}/${baseList.length} os.`;
+        }
+    }
+
+    function getBaseMembersForSelectedGroup() {
+        const group = document.getElementById('msg-group') ? document.getElementById('msg-group').value : "WSZYSCY";
+        if (group === "WSZYSCY") {
+            return members;
+        }
+        if (group === "TYLKO_W_GRUPACH") {
+            return members.filter(m => m.grupa && m.grupa.trim() !== "" && m.grupa !== "BRAK GRUPY");
+        }
+        if (group === "BRAK") {
+            return members.filter(m => !m.grupa || m.grupa.trim() === "" || m.grupa === "BRAK GRUPY");
+        }
+        return members.filter(m => m.grupa === group);
+    }
+    // ---------------------------------------------
 
     window.showMsgIndividualSuggestions = function(val) {
         const box = document.getElementById('msg-individual-suggestions');
@@ -1403,19 +1529,22 @@
 
     function getSelectedMembersForMessage() {
         if (msgMode === 'INDIVIDUAL') return msgIndividualQueue;
-        const group = document.getElementById('msg-group').value;
-        if (group === "WSZYSCY") return members;
-        if (group === "BRAK") return members.filter(m => !m.grupa || m.grupa.trim() === "" || m.grupa === "BRAK GRUPY");
-        return members.filter(m => m.grupa === group);
+        
+        // W trybie grupowym bierzemy bazę i odsiewamy osoby odznaczone na liście
+        const base = getBaseMembersForSelectedGroup();
+        return base.filter(m => !msgGroupExcluded.has(m.imie));
     }
 
     window.sendGroupEmail = function() {
         if (msgMode === 'INDIVIDUAL' && msgIndividualQueue.length === 0) return alert("❌ Dodaj co najmniej jedną osobę do listy!");
         const targetMembers = getSelectedMembersForMessage();
+        
+        if (targetMembers.length === 0) return alert("❌ Brak zaznaczonych odbiorców na liście!");
+        
         const body = document.getElementById('msg-body').value;
         
         const emails = targetMembers.map(m => m.email).filter(e => e && e.trim() !== "");
-        if(emails.length === 0) return alert("❌ Brak zapisanych adresów e-mail w tej grupie!");
+        if(emails.length === 0) return alert("❌ Brak zapisanych adresów e-mail dla zaznaczonych osób!");
         
         const bccList = emails.join(',');
         const subject = encodeURIComponent("Ogłoszenie - Klub Karate Kyokushin SHODAN");
@@ -1427,10 +1556,13 @@
     window.sendGroupSMS = function() {
         if (msgMode === 'INDIVIDUAL' && msgIndividualQueue.length === 0) return alert("❌ Dodaj co najmniej jedną osobę do listy!");
         const targetMembers = getSelectedMembersForMessage();
+        
+        if (targetMembers.length === 0) return alert("❌ Brak zaznaczonych odbiorców na liście!");
+        
         const body = document.getElementById('msg-body').value;
         
         const phones = targetMembers.map(m => m.telefon).filter(p => p && p.trim() !== "");
-        if(phones.length === 0) return alert("❌ Brak zapisanych numerów telefonu w tej grupie!");
+        if(phones.length === 0) return alert("❌ Brak zapisanych numerów telefonu dla zaznaczonych osób!");
         
         const phoneList = phones.map(p => p.replace(/\s+/g, '')).join(',');
         const bodyEnc = encodeURIComponent(body);
@@ -1439,13 +1571,13 @@
         const sep = (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) ? '&' : '?';
         window.location.href = `sms:${phoneList}${sep}body=${bodyEnc}`;
     }
- 
+
     window.setClubFilter = function(grp) {
         activeGroupFilter = grp;
         renderMembers();
         renderGroupFilters();
     }
- 
+
     window.renderMembers = function() {
         const searchEl = document.getElementById('search-member');
         const term = searchEl ? searchEl.value.toLowerCase() : '';
@@ -1458,7 +1590,7 @@
                 list = list.filter(m => m.grupa === activeGroupFilter);
             }
         }
- 
+
         const html = list.filter(m => m.imie.toLowerCase().includes(term)).map(m => `
             <div class="card" style="cursor:pointer;" onclick="openProfile('${escapeAttr(m.imie)}')">
                 <div style="font-weight:bold">${m.imie}</div>
@@ -1469,10 +1601,10 @@
         `).join('');
         document.getElementById('members-list').innerHTML = html;
     }
- 
+
     renderGroupFilters();
     renderMembers();
- 
+
     window.addNewMember = async function() {
         const imie = document.getElementById('new-name').value.trim();
         const rawDate = document.getElementById('new-date').value;
@@ -1482,10 +1614,10 @@
         const kontaktDo = document.getElementById('new-contact-who').value;
         const telefon = document.getElementById('new-phone').value;
         const email = document.getElementById('new-email').value;
- 
+
         if(!imie || !rawDate) return alert("Podaj Imię i Datę!");
         const formattedDate = formatDateToPL(rawDate);
- 
+
         showLoader(true);
         await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
             type:'addMember', imie, rok: formattedDate, stopien, grupa,
@@ -1503,7 +1635,7 @@
         document.getElementById('new-phone').value = '';
         document.getElementById('new-email').value = '';
         toggleAddMemberForm(); 
- 
+
         showLoader(false);
     }
  
